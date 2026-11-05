@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Portal-X — One Portal. Complete Control.</title>
+<meta name="description" content="Portal-X: digital security & membership ecosystem. Account protection, memberships, Discord identity linking, rewards and support in one secure portal.">
+<meta name="theme-color" content="#03060C">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%2300F0FF'/%3E%3Cstop offset='1' stop-color='%230072FF'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='48' height='48' rx='11' fill='%2303060C'/%3E%3Cpath d='M24 5 40.5 14.5v19L24 43 7.5 33.5v-19z' fill='none' stroke='url(%23g)' stroke-width='3'/%3E%3Cpath d='M17 17l14 14M31 17 17 31' stroke='url(%23g)' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ================= TOKENS ================= */
+:root{
+ --void:#03060C;--obs:#070C18;--surf:#0C1427;--surf2:#121D38;
+ --cy:#00F0FF;--bl:#0072FF;--ok:#00FF88;--warn:#FFB800;--bad:#FF4D73;
+ --tx:#EAF6FF;--mut:#A3B6D2;--dim:#7F93B3;
+ --line:rgba(0,240,255,.14);--line2:rgba(0,240,255,.4);
+ --glass:rgba(12,20,39,.62);
+ --grad:linear-gradient(120deg,var(--cy),var(--bl));
+ --ease:cubic-bezier(.16,1,.3,1);
+ --fd:"Syne",sans-serif;--fm:"JetBrains Mono",ui-monospace,monospace;--fb:"Plus Jakarta Sans",system-ui,sans-serif;
+ color-scheme:dark;
+}
+*,*:before,*:after{box-sizing:border-box}
+html{background:var(--void);-webkit-text-size-adjust:100%}
+html.lenis,html.lenis body{height:auto}
+.lenis.lenis-smooth{scroll-behavior:auto!important}
+.lenis.lenis-stopped{overflow:hidden}
+body{margin:0;background:var(--void);color:var(--tx);font:16px/1.6 var(--fb);min-height:100vh;overflow-x:hidden;padding-bottom:env(safe-area-inset-bottom,0)}
+::selection{background:var(--cy);color:var(--void)}
+a{color:var(--cy);text-decoration:none}
+img,svg{display:block}
+button{font:inherit;color:inherit}
+h1,h2,h3,h4{font-family:var(--fd);line-height:1.02;margin:0;letter-spacing:-.02em}
+p{margin:0;color:var(--mut)}
+.mono{font-family:var(--fm)}
+.kick{font:500 12px/1 var(--fm);letter-spacing:.22em;text-transform:uppercase;color:var(--cy);display:inline-flex;align-items:center;gap:10px}
+.kick:before{content:"";width:22px;height:1px;background:var(--cy);box-shadow:0 0 8px var(--cy)}
+.gt{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}.cy{color:var(--cy)}
+
+/* ===== atmosphere ===== */
+.atmo{position:fixed;inset:0;pointer-events:none;z-index:0}
+.atmo .grid{position:absolute;inset:-2px;background-image:linear-gradient(rgba(0,240,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(0,240,255,.045) 1px,transparent 1px);background-size:64px 64px;mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 30%,transparent 80%);-webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 30%,transparent 80%)}
+.atmo .glow1{position:absolute;width:900px;height:900px;left:55%;top:-420px;background:radial-gradient(circle,rgba(0,114,255,.22),transparent 65%);filter:blur(20px)}
+.atmo .glow2{position:absolute;width:700px;height:700px;left:-250px;top:60%;background:radial-gradient(circle,rgba(0,240,255,.08),transparent 65%)}
+.atmo .noise{position:absolute;inset:0;opacity:.07;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.atmo .scan{position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.012) 0 1px,transparent 1px 3px)}
+#progress{position:fixed;top:0;left:0;height:2px;width:0;background:var(--grad);z-index:90;box-shadow:0 0 12px var(--cy)}
+
+/* ===== boot loader ===== */
+#boot{position:fixed;inset:0;z-index:100;background:var(--void);display:grid;place-items:center;animation:bootout .7s var(--ease) 2.3s forwards}
+#boot.done{animation:bootout .7s var(--ease) forwards}
+#boot .bx{display:flex;flex-direction:column;align-items:center;gap:22px}
+#boot svg path{stroke-dasharray:140;stroke-dashoffset:140;animation:draw 1.2s var(--ease) forwards}
+#boot svg path+path{animation-delay:.35s}
+#boot .bn{font:700 12px var(--fm);letter-spacing:.3em;color:var(--mut)}
+#boot .bn b{color:var(--cy);font-weight:700}
+#boot .bl{width:200px;height:1px;background:var(--line);overflow:hidden}
+#boot .bl i{display:block;height:100%;width:100%;background:var(--grad);transform-origin:left;animation:bar 1.8s var(--ease) forwards;transform:scaleX(0)}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes bar{to{transform:scaleX(1)}}
+@keyframes bootout{to{opacity:0;visibility:hidden;clip-path:inset(0 0 100% 0)}}
+
+/* ===== nav ===== */
+.nav{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:60;width:min(1320px,calc(100% - 24px));display:flex;align-items:center;gap:8px;padding:8px 8px 8px 16px;border:1px solid var(--line);border-radius:18px;background:rgba(5,10,22,.62);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);transition:background-color .3s,border-color .3s}
+.nav.scrolled{background:rgba(3,6,12,.86);border-color:rgba(0,240,255,.22)}
+.brand{display:flex;align-items:center;gap:10px;color:var(--tx);font:800 18px var(--fd);letter-spacing:.04em;margin-right:auto}
+.brand b{color:var(--cy)}
+.brand svg{transition:transform .6s var(--ease)}
+.brand:hover svg{transform:rotate(60deg)}
+.nlinks{display:flex;gap:2px}
+.nlinks a{position:relative;color:var(--mut);font:500 13px var(--fb);padding:9px 12px;border-radius:10px;transition:color .2s,background-color .2s}
+.nlinks a:hover{color:var(--tx);background:rgba(0,240,255,.06)}
+.nlinks a.on{color:var(--tx)}
+.nlinks a.on:after{content:"";position:absolute;left:12px;right:12px;bottom:3px;height:2px;border-radius:2px;background:var(--grad);box-shadow:0 0 10px var(--cy)}
+.nauth{display:flex;gap:6px;align-items:center;margin-left:8px}
+.burger{display:none;width:42px;height:42px;border-radius:12px;border:1px solid var(--line);background:transparent;place-items:center;cursor:pointer}
+.mnav{position:fixed;inset:0;z-index:55;background:rgba(3,6,12,.97);backdrop-filter:blur(20px);padding:110px 28px 40px;display:flex;flex-direction:column;gap:4px;opacity:0;visibility:hidden;transition:opacity .4s,visibility .4s;overflow:auto}
+.mnav.open{opacity:1;visibility:visible}
+.mnav a{font:800 clamp(30px,8vw,46px)/1.15 var(--fd);color:var(--tx);opacity:0;transform:translateY(20px);transition:opacity .5s var(--ease),transform .5s var(--ease),color .2s}
+.mnav.open a{opacity:1;transform:none}
+.mnav a:hover,.mnav a.on{color:var(--cy)}
+.mnav .mfoot{margin-top:auto;padding-top:30px;display:flex;gap:10px;flex-wrap:wrap}
+.mnav .mfoot a{font:500 13px var(--fm);color:var(--cy);opacity:1;transform:none}
+@media(max-width:1360px){.nlinks{display:none}.burger{display:grid}.nauth .hide-m{display:none}}
+
+/* ===== buttons ===== */
+.btn{--bg:var(--grad);position:relative;display:inline-flex;align-items:center;justify-content:center;gap:10px;border:0;border-radius:12px;padding:13px 22px;font:700 13px/1 var(--fm);letter-spacing:.08em;text-transform:uppercase;color:var(--void);background:var(--bg);cursor:pointer;overflow:hidden;isolation:isolate;box-shadow:0 0 0 1px rgba(0,240,255,.4),0 10px 30px -10px rgba(0,240,255,.7);transition:transform .3s var(--ease),box-shadow .3s}
+.btn:before{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%);transform:translateX(-120%);transition:transform .7s var(--ease);z-index:-1}
+.btn:hover:before{transform:translateX(120%)}
+.btn:hover{box-shadow:0 0 0 1px var(--cy),0 14px 40px -8px rgba(0,240,255,.9)}
+.btn:active{transform:scale(.97)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn.ghost{background:rgba(0,240,255,.04);color:var(--tx);box-shadow:inset 0 0 0 1px var(--line2)}
+.btn.ghost:hover{background:rgba(0,240,255,.1);box-shadow:inset 0 0 0 1px var(--cy),0 0 24px -6px var(--cy)}
+.btn.sm{padding:9px 14px;font-size:11px;border-radius:10px}
+.btn.danger{background:rgba(255,77,115,.12);color:#FF9DB2;box-shadow:inset 0 0 0 1px rgba(255,77,115,.45)}
+.btn.block{width:100%}
+.btn svg{flex:none}
+:focus-visible{outline:2px solid var(--cy);outline-offset:3px;border-radius:6px}
+
+/* ===== layout ===== */
+#app{position:relative;z-index:2}
+.wrap{width:min(1320px,calc(100% - 40px));margin:0 auto}
+.page{padding:140px 0 100px;animation:pin .8s var(--ease)}
+@keyframes pin{from{opacity:0}to{opacity:1}}
+section{position:relative}
+.sec{padding:110px 0}
+.sh{display:grid;grid-template-columns:1.2fr 1fr;gap:40px;align-items:end;margin-bottom:56px}
+.sh h2{font-size:clamp(34px,4.6vw,64px);font-weight:800}
+.sh p{max-width:460px;font-size:17px}
+@media(max-width:860px){.sh{grid-template-columns:1fr;gap:18px}.sec{padding:80px 0}}
+
+/* reveal */
+.js .rv{opacity:0;transform:translateY(34px);transition:opacity 1s var(--ease),transform 1s var(--ease);transition-delay:var(--rd,0s)}
+.js .rv.in{opacity:1;transform:none}
+/* masked line reveal */
+.ml{display:block;overflow:hidden;padding-bottom:.08em;margin-bottom:-.08em}
+.ml>span{display:block;transform:translateY(105%);animation:mlup 1.15s var(--ease) forwards;animation-delay:var(--d,0s)}
+@keyframes mlup{to{transform:none}}
+
+/* ===== glass card ===== */
+.card{position:relative;background:var(--glass);border:1px solid var(--line);border-radius:22px;padding:28px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);transition:border-color .35s,box-shadow .35s,transform .5s var(--ease);transform-style:preserve-3d}
+.card:hover{border-color:rgba(0,240,255,.34);box-shadow:0 0 0 1px rgba(0,240,255,.06),0 30px 60px -30px rgba(0,114,255,.5)}
+.card .spot{position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .3s;background:radial-gradient(420px circle at var(--mx,50%) var(--my,50%),rgba(0,240,255,.12),transparent 45%)}
+.card:hover .spot{opacity:1}
+.card h3{font-size:22px;font-weight:700;margin:16px 0 8px}
+.card p{font-size:15px}
+.corner{position:absolute;width:12px;height:12px;border-color:var(--cy);border-style:solid;opacity:.6}
+.corner.tl{top:-1px;left:-1px;border-width:2px 0 0 2px;border-top-left-radius:22px}
+.corner.br{bottom:-1px;right:-1px;border-width:0 2px 2px 0;border-bottom-right-radius:22px}
+.ico{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(140deg,rgba(0,240,255,.16),rgba(0,114,255,.06));border:1px solid rgba(0,240,255,.25);color:var(--cy);box-shadow:inset 0 0 20px rgba(0,240,255,.08)}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+.grid2>*,.grid3>*,.grid4>*,.plans>*,.bento>*{min-width:0}
+@media(max-width:1000px){.grid4{grid-template-columns:repeat(2,1fr)}.grid3{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.grid4,.grid3,.grid2{grid-template-columns:1fr}}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border-radius:99px;font:500 11px/1.2 var(--fm);letter-spacing:.06em;text-transform:uppercase;border:1px solid currentColor;background:rgba(255,255,255,.02)}
+.pill.cy{color:var(--cy)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 10px currentColor;animation:pulse 2s infinite}
+@keyframes pulse{50%{opacity:.35}}
+ul.chk{list-style:none;padding:0;margin:18px 0}
+ul.chk li{position:relative;padding:7px 0 7px 28px;color:var(--mut);font-size:14.5px;border-bottom:1px dashed rgba(0,240,255,.08)}
+ul.chk li:before{content:"";position:absolute;left:0;top:12px;width:14px;height:14px;border-radius:4px;background:rgba(0,240,255,.1);border:1px solid var(--line2)}
+ul.chk li.no:after{display:none}
+ul.chk li.no:before{background:transparent;border-color:var(--warn)}
+ul.chk li:after{content:"";position:absolute;left:4px;top:15px;width:6px;height:3px;border-left:2px solid var(--cy);border-bottom:2px solid var(--cy);transform:rotate(-45deg)}
+
+/* ===== HERO ===== */
+.hero{position:relative;min-height:100svh;display:flex;align-items:center;padding:130px 0 70px;overflow:hidden}
+.hero canvas{position:absolute;inset:0;width:100%;height:100%;z-index:0}
+.hero .spotlight{position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(600px circle at var(--hx,70%) var(--hy,40%),rgba(0,240,255,.07),transparent 60%)}
+.hero .hin{position:relative;z-index:2;display:grid;grid-template-columns:1.25fr .75fr;gap:40px;align-items:end;width:min(1320px,calc(100% - 40px));margin:0 auto}
+.hero h1{font-size:clamp(40px,5.9vw,112px);font-weight:800;line-height:.88;letter-spacing:-.045em;text-transform:uppercase}
+.hero h1 .o{-webkit-text-stroke:1.5px var(--cy);color:transparent;text-shadow:0 0 40px rgba(0,240,255,.25)}
+.hero .lead{max-width:520px;font-size:18px;margin:30px 0 34px}
+.hero .ctas{display:flex;gap:12px;flex-wrap:wrap}
+.hero .meta{display:flex;gap:28px;margin-top:46px;flex-wrap:wrap}
+.hero .meta div{font:500 11px var(--fm);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.hero .meta b{display:block;font:800 30px var(--fd);letter-spacing:-.02em;color:var(--tx);text-transform:none;margin-bottom:4px}
+.fade-up{opacity:0;animation:fu 1s var(--ease) forwards;animation-delay:var(--d,0s)}
+@keyframes fu{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.console{padding:0;overflow:hidden;transform:perspective(1000px) rotateY(-10deg) rotateX(4deg);box-shadow:0 40px 80px -30px rgba(0,0,0,.8),0 0 0 1px rgba(0,240,255,.08)}
+.console .ch{display:flex;align-items:center;gap:8px;padding:14px 18px;border-bottom:1px solid var(--line);font:500 11px var(--fm);letter-spacing:.14em;color:var(--mut);text-transform:uppercase}
+.console .ch i{width:9px;height:9px;border-radius:50%;background:#1f2b47}
+.console .ch i:first-child{background:var(--cy);box-shadow:0 0 8px var(--cy)}
+.console .ch span{margin-left:auto}
+.console .row{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-bottom:1px solid rgba(0,240,255,.06);font:400 12.5px var(--fm)}
+.console .row span:first-child{color:var(--mut)}
+.console .log{height:120px;overflow:hidden;padding:12px 18px;font:400 11.5px/1.8 var(--fm);color:var(--dim);mask-image:linear-gradient(transparent,#000 40%);-webkit-mask-image:linear-gradient(transparent,#000 40%)}
+.console .log b{color:var(--cy);font-weight:500}
+.scrollcue{position:absolute;left:50%;bottom:22px;z-index:2;transform:translateX(-50%);font:500 10px var(--fm);letter-spacing:.3em;color:var(--dim);display:flex;flex-direction:column;align-items:center;gap:10px}
+.scrollcue i{width:1px;height:40px;background:linear-gradient(var(--cy),transparent);animation:cue 2s infinite}
+@keyframes cue{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+.hero .hin>*{min-width:0}
+.kick{flex-wrap:wrap}
+.brand{white-space:nowrap}
+@media(max-width:1000px){.hero .hin{grid-template-columns:minmax(0,1fr)}.hero canvas{opacity:.55}.hero h1{font-size:clamp(36px,10vw,96px)}.console{transform:none;max-width:560px}.scrollcue{display:none}.hero{align-items:flex-start;padding-top:120px}}
+
+/* ===== marquee ===== */
+.marquee{position:relative;z-index:2;border-block:1px solid var(--line);padding:26px 0;overflow:hidden;background:rgba(3,6,12,.6);display:flex}
+.marquee .mtk{display:flex;flex:none;gap:48px;padding-right:48px;animation:mq 70s linear infinite;align-items:center}
+.marquee span{font:800 clamp(34px,5vw,72px)/1 var(--fd);text-transform:uppercase;letter-spacing:-.02em;white-space:nowrap;color:transparent;-webkit-text-stroke:1px rgba(163,182,210,.55)}
+.marquee span.f{color:var(--tx);-webkit-text-stroke:0}
+.marquee em{font-style:normal;color:var(--cy);font-size:28px}
+@keyframes mq{to{transform:translateX(-100%)}}
+
+/* ===== bento ===== */
+.bento{display:grid;grid-template-columns:repeat(12,1fr);grid-auto-rows:minmax(250px,auto);gap:18px}
+.bento>.card{display:flex;flex-direction:column;overflow:hidden}
+.b-a{grid-column:1/8;grid-row:1/3}
+.b-b{grid-column:8/13;grid-row:1}
+.b-c{grid-column:8/13;grid-row:2}
+.b-d{grid-column:1/5}.b-e{grid-column:5/9}.b-f{grid-column:9/13}
+@media(max-width:1000px){.bento{grid-template-columns:1fr 1fr}.b-a{grid-column:1/3;grid-row:auto}.b-b,.b-c,.b-d,.b-e,.b-f{grid-column:auto;grid-row:auto}}
+@media(max-width:640px){.bento{grid-template-columns:1fr}.b-a{grid-column:auto}}
+.bento .bt{margin-top:auto}
+.radar{position:relative;width:min(340px,80%);aspect-ratio:1;margin:28px auto 10px;border-radius:50%;background:radial-gradient(circle,transparent 30%,rgba(0,240,255,.04) 31%,transparent 32%,transparent 55%,rgba(0,240,255,.05) 56%,transparent 57%),radial-gradient(circle,rgba(0,114,255,.12),transparent 70%);border:1px solid var(--line2);box-shadow:0 0 60px -10px rgba(0,240,255,.3),inset 0 0 40px rgba(0,240,255,.08)}
+.radar:before,.radar:after{content:"";position:absolute;background:var(--line)}
+.radar:before{left:50%;top:0;bottom:0;width:1px}.radar:after{top:50%;left:0;right:0;height:1px}
+.radar .sw{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,rgba(0,240,255,.5),rgba(0,240,255,0) 22%,transparent);animation:spin 4s linear infinite}
+.radar .bp{position:absolute;width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 14px var(--ok);animation:pulse 2s infinite}
+.radar .rsh{position:absolute;inset:34%;display:grid;place-items:center;color:var(--cy);filter:drop-shadow(0 0 14px var(--cy))}
+@keyframes spin{to{transform:rotate(360deg)}}
+.tierbars{display:flex;flex-direction:column;gap:14px;margin:22px 0 6px}
+.tierbars div{display:grid;grid-template-columns:80px 1fr;align-items:center;gap:12px;font:500 12px var(--fm);color:var(--mut)}
+.tierbars i{height:8px;border-radius:9px;background:var(--grad);box-shadow:0 0 14px rgba(0,240,255,.4);transform-origin:left;transform:scaleX(0);transition:transform 1.6s var(--ease)}
+.in .tierbars i,.tierbars.in i{transform:scaleX(1)}
+.flow{display:flex;align-items:center;gap:8px;margin:24px 0 6px}
+.flow .nd{flex:none;width:52px;height:52px;border-radius:14px;display:grid;place-items:center;border:1px solid var(--line2);background:rgba(0,240,255,.05);color:var(--cy)}
+.flow .ln{flex:1;height:2px;background:repeating-linear-gradient(90deg,var(--cy) 0 6px,transparent 6px 12px);background-size:24px 2px;animation:dash 1s linear infinite;opacity:.7}
+@keyframes dash{to{background-position:24px 0}}
+.bignum{font:800 64px/1 var(--fd);letter-spacing:-.04em;margin:18px 0 10px}
+.bar{height:6px;border-radius:9px;background:rgba(0,240,255,.08);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--grad);box-shadow:0 0 12px var(--cy);transition:width 1.2s var(--ease)}
+.signed{margin:20px 0 8px;padding:12px 14px;border-radius:12px;border:1px dashed var(--line2);font:400 12px var(--fm);color:var(--mut);word-break:break-all}
+.signed b{color:var(--cy);font-weight:500}
+.stlist{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 6px}
+
+/* ===== steps ===== */
+.steps{display:grid;grid-template-columns:repeat(7,1fr);gap:0;border-top:1px solid var(--line)}
+.step{position:relative;padding:30px 20px 10px 0}
+.step .n{font:800 52px/1 var(--fd);color:transparent;-webkit-text-stroke:1px var(--line2);transition:color .4s,-webkit-text-stroke-color .4s}
+.step:hover .n{color:var(--cy);-webkit-text-stroke-color:var(--cy)}
+.step:before{content:"";position:absolute;top:-5px;left:0;width:9px;height:9px;border-radius:50%;background:var(--cy);box-shadow:0 0 12px var(--cy)}
+.step p{font-size:14px;margin-top:14px}
+@media(max-width:1100px){.steps{grid-template-columns:1fr 1fr 1fr 1fr}}
+@media(max-width:640px){.steps{grid-template-columns:1fr 1fr}}
+
+/* ===== stack table ===== */
+.stack{border-top:1px solid var(--line)}
+.stack .r{display:grid;grid-template-columns:200px 1fr auto;gap:24px;align-items:center;padding:24px 4px;border-bottom:1px solid var(--line);transition:background-color .3s,padding .4s var(--ease)}
+.stack .r:hover{background:linear-gradient(90deg,rgba(0,240,255,.06),transparent);padding-left:18px}
+.stack .r span{font:500 12px var(--fm);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.stack .r h4{font-size:clamp(20px,2.4vw,32px);font-weight:700}
+@media(max-width:700px){.stack .r{grid-template-columns:1fr;gap:6px}}
+
+/* ===== pricing ===== */
+.seg{position:relative;display:inline-grid;grid-template-columns:repeat(4,1fr);padding:5px;border-radius:14px;border:1px solid var(--line);background:rgba(3,6,12,.7);margin-bottom:30px;max-width:100%}
+.seg i{position:absolute;top:5px;bottom:5px;left:5px;width:calc((100% - 10px)/4);border-radius:10px;background:var(--grad);box-shadow:0 0 20px rgba(0,240,255,.45);transform:translateX(calc(var(--i)*100%));transition:transform .5s var(--ease)}
+.seg button{position:relative;z-index:1;background:none;border:0;padding:11px 18px;font:600 12px var(--fm);letter-spacing:.06em;text-transform:uppercase;color:var(--mut);cursor:pointer;transition:color .3s;white-space:nowrap}
+.seg button.on{color:var(--void)}
+@media(max-width:480px){.seg button{padding:10px 8px;font-size:10.5px}}
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:stretch}
+@media(max-width:1000px){.plans{grid-template-columns:1fr;max-width:560px}}
+.plan{display:flex;flex-direction:column;padding:32px}
+.plan .tn{display:flex;justify-content:space-between;align-items:center}
+.plan h3{font-size:34px;margin:18px 0 4px;font-weight:800}
+.plan .pr{font:800 58px/1 var(--fd);letter-spacing:-.04em;margin:22px 0 6px;display:flex;align-items:baseline;gap:6px}
+.plan .pr small{font:500 14px var(--fm);color:var(--mut);letter-spacing:0}
+.plan .sv{font:500 12px var(--fm);color:var(--ok);min-height:18px}
+.plan .btn{margin-top:auto}
+.plan.hot{border-color:transparent;background:linear-gradient(var(--surf),var(--surf)) padding-box,conic-gradient(from var(--ang,0deg),var(--cy),var(--bl),transparent 40%,var(--cy) 60%,var(--bl),var(--cy)) border-box;border:1px solid transparent;animation:ang 6s linear infinite;box-shadow:0 0 80px -30px var(--cy)}
+@property --ang{syntax:"<angle>";inherits:false;initial-value:0deg}
+@keyframes ang{to{--ang:360deg}}
+.fine{font-size:13px;margin-top:22px;max-width:760px;color:var(--dim)}
+
+/* ===== tables ===== */
+.tbl{overflow-x:auto;border-radius:16px;border:1px solid var(--line)}
+table{width:100%;border-collapse:collapse;font:400 13px var(--fm);min-width:560px}
+th,td{text-align:left;padding:14px 16px;border-bottom:1px solid rgba(0,240,255,.08)}
+th{color:var(--dim);font-weight:500;font-size:11px;letter-spacing:.14em;text-transform:uppercase;background:rgba(0,240,255,.03)}
+tr:last-child td{border-bottom:0}
+tbody tr{transition:background-color .2s}
+tbody tr:hover{background:rgba(0,240,255,.04)}
+
+/* ===== forms ===== */
+label.lb{display:block;font:500 11px var(--fm);letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin:18px 0 8px}
+.inp,select.inp,textarea.inp{width:100%;background:rgba(3,6,12,.7);border:1px solid var(--line);color:var(--tx);border-radius:12px;padding:13px 14px;font:400 15px var(--fb);transition:border-color .2s,box-shadow .2s}
+.inp:focus{outline:0;border-color:var(--cy);box-shadow:0 0 0 4px rgba(0,240,255,.12)}
+.inp[disabled]{opacity:.7}
+.chkl{display:flex;align-items:center;gap:10px;margin:12px 0;font-size:14px;color:var(--mut);cursor:pointer}
+.chkl input{appearance:none;-webkit-appearance:none;width:18px;height:18px;border-radius:5px;border:1px solid var(--line2);background:rgba(3,6,12,.7);display:grid;place-items:center;cursor:pointer;flex:none;margin:0}
+.chkl input:checked{background:var(--grad);border-color:var(--cy)}
+.chkl input:checked:after{content:"";width:8px;height:4px;border-left:2px solid var(--void);border-bottom:2px solid var(--void);transform:rotate(-45deg) translate(1px,-1px)}
+.err{color:var(--bad);font:500 13px var(--fm);min-height:20px;margin-top:12px}
+input[type=range]{width:100%;accent-color:var(--cy)}
+
+/* ===== auth split ===== */
+.auth{display:grid;grid-template-columns:1fr 1fr;min-height:calc(100svh - 40px);gap:0;padding-top:96px}
+.auth .vis{position:relative;margin:0 0 30px 20px;border-radius:28px;overflow:hidden;border:1px solid var(--line);background:radial-gradient(circle at 50% 45%,rgba(0,114,255,.35),transparent 60%),var(--obs);display:flex;flex-direction:column;justify-content:flex-end;padding:44px}
+.auth .vis h2{font-size:clamp(36px,4.4vw,64px);font-weight:800;text-transform:uppercase;line-height:.92}
+.ring{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);width:min(380px,70%);aspect-ratio:1}
+.ring div{position:absolute;inset:0;border-radius:50%;border:1px solid var(--line2);animation:spin 20s linear infinite}
+.ring div:nth-child(2){inset:12%;border-style:dashed;animation-duration:30s;animation-direction:reverse}
+.ring div:nth-child(3){inset:26%;border:2px solid transparent;border-top-color:var(--cy);border-right-color:var(--bl);animation-duration:3s;box-shadow:0 0 40px -10px var(--cy)}
+.ring svg{position:absolute;inset:38%;width:24%;height:24%;filter:drop-shadow(0 0 20px var(--cy))}
+.auth .fm{display:flex;align-items:center;justify-content:center;padding:30px 20px 60px}
+.auth form{width:100%;max-width:440px}
+.auth form h1{font-size:44px;font-weight:800;margin:14px 0 8px}
+@media(max-width:900px){.auth .vis h2{font-size:clamp(26px,8vw,48px)}.auth{grid-template-columns:1fr}.auth .vis{margin:0 16px;min-height:260px;padding:26px}.ring{top:42%;width:180px}}
+
+/* ===== dashboard ===== */
+.dash{display:grid;grid-template-columns:260px 1fr;gap:24px;align-items:start}
+.side{position:sticky;top:100px;padding:14px;display:flex;flex-direction:column;gap:2px}
+.side .who{display:flex;gap:12px;align-items:center;padding:10px 10px 18px;margin-bottom:8px;border-bottom:1px solid var(--line)}
+.av{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font:800 18px var(--fd);color:var(--void);background:var(--grad);flex:none}
+.side button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:0;padding:11px 12px;border-radius:11px;color:var(--mut);font:500 14px var(--fb);cursor:pointer;transition:color .2s,background-color .2s;white-space:nowrap}
+.side button:hover{color:var(--tx);background:rgba(0,240,255,.05)}
+.side button.on{color:var(--tx);background:linear-gradient(90deg,rgba(0,240,255,.14),rgba(0,240,255,.02));box-shadow:inset 2px 0 0 var(--cy)}
+.side button.on svg{color:var(--cy)}
+.dmain{min-width:0}
+.dmain h2{font-size:clamp(30px,3.6vw,48px);font-weight:800;margin-bottom:24px}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.tile{padding:22px}
+.tile .l{font:500 11px var(--fm);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.tile .v{font:800 30px/1.1 var(--fd);margin-top:12px;letter-spacing:-.02em}
+.tiles.t3{grid-template-columns:repeat(3,1fr)}
+.tiles>*{min-width:0}
+.tile .v{overflow-wrap:anywhere}
+@media(max-width:1100px){.tiles,.tiles.t3{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.seg{display:grid;width:100%}.rowb>.inp{max-width:none!important}form.flex{flex-wrap:wrap!important}}
+@media(max-width:900px){.dash{grid-template-columns:1fr}.side{position:static;flex-direction:row;overflow-x:auto;padding:8px;gap:4px;-webkit-overflow-scrolling:touch}.side .who{display:none}.side button{width:auto}}
+@media(max-width:480px){.tiles{grid-template-columns:1fr 1fr;gap:10px}.tile{padding:16px}.tile .v{font-size:22px}}
+.gauge{position:relative;width:170px;height:170px;flex:none}
+.gauge svg{width:100%;height:100%;transform:rotate(-90deg)}
+.gauge circle{fill:none;stroke-width:10}
+.gauge .t{stroke:rgba(0,240,255,.1)}
+.gauge .v{stroke:url(#gg);stroke-linecap:round;transition:stroke-dashoffset 1.4s var(--ease);filter:drop-shadow(0 0 8px rgba(0,240,255,.6))}
+.gauge .c{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.gauge .c b{display:block;font:800 40px/1 var(--fd)}
+.gauge .c span{font:500 10px var(--fm);letter-spacing:.14em;color:var(--dim)}
+.flex{display:flex;gap:24px;align-items:center;flex-wrap:wrap}
+.rowb{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.mt{margin-top:18px}.mt2{margin-top:32px}
+
+/* tools */
+.pwout{display:flex;gap:10px;align-items:center;margin:16px 0}
+.pwout code{flex:1;min-width:0;padding:14px;border-radius:12px;background:rgba(3,6,12,.8);border:1px solid var(--line2);font:500 15px var(--fm);color:var(--cy);word-break:break-all;min-height:50px}
+.drop{display:block;border:1px dashed var(--line2);border-radius:14px;padding:22px;text-align:center;cursor:pointer;transition:background-color .2s;font-size:14px;color:var(--mut)}
+.drop:hover{background:rgba(0,240,255,.05)}
+.hashout{font:400 12px var(--fm);color:var(--cy);word-break:break-all;margin-top:12px;min-height:18px}
+.urlr{display:flex;flex-direction:column;gap:6px;margin-top:14px;font:400 12.5px var(--fm)}
+
+/* modal + toast */
+.modal{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:16px;background:rgba(3,6,12,.72);backdrop-filter:blur(10px);animation:pin .3s}
+.modal .card{max-width:480px;width:100%;background:var(--surf);animation:pop .5s var(--ease)}
+@keyframes pop{from{opacity:0;transform:translateY(20px) scale(.97)}}
+.modal h3{font-size:26px;margin:0 0 12px}
+.modal .acts{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
+#toasts{position:fixed;right:16px;bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:95;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.toast{display:flex;gap:10px;align-items:center;padding:12px 16px;border-radius:12px;background:rgba(12,20,39,.95);border:1px solid var(--line2);font:500 13px var(--fm);box-shadow:0 20px 40px -10px #000;animation:pop .4s var(--ease)}
+.toast svg{color:var(--cy)}
+
+/* page header */
+.ph{margin-bottom:60px}
+.ph h1{font-size:clamp(36px,7vw,112px);font-weight:800;text-transform:uppercase;line-height:.9;letter-spacing:-.045em;margin:22px 0 26px}
+.ph p{font-size:18px;max-width:620px}
+
+/* accordion */
+details.acc{border-bottom:1px solid var(--line);padding:22px 4px}
+details.acc summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font:700 clamp(20px,2.4vw,28px) var(--fd)}
+details.acc summary::-webkit-details-marker{display:none}
+details.acc summary:after{content:"+";font:400 28px var(--fm);color:var(--cy);transition:transform .3s}
+details.acc[open] summary:after{transform:rotate(45deg)}
+details.acc p{margin-top:12px;max-width:760px}
+
+/* CTA + footer */
+.cta{position:relative;overflow:hidden;border-radius:32px;border:1px solid var(--line);padding:clamp(40px,7vw,100px);background:radial-gradient(ellipse at 80% 20%,rgba(0,114,255,.35),transparent 55%),radial-gradient(ellipse at 10% 100%,rgba(0,240,255,.15),transparent 50%),var(--obs)}
+.cta h2{font-size:clamp(48px,9vw,140px);font-weight:800;text-transform:uppercase;line-height:.88;letter-spacing:-.045em}
+footer{position:relative;z-index:2;border-top:1px solid var(--line);padding:80px 0 30px;margin-top:40px;overflow:hidden}
+.fgrid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:30px}
+.fgrid h5{font:500 11px var(--fm);letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin:0 0 16px}
+.fgrid a{display:block;color:var(--mut);padding:5px 0;font-size:14px;transition:color .2s}
+.fgrid a:hover{color:var(--cy)}
+.fword{font:800 clamp(80px,21vw,330px)/.8 var(--fd);letter-spacing:-.06em;margin-top:70px;background:linear-gradient(180deg,rgba(0,240,255,.35),rgba(0,240,255,0) 85%);-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap;user-select:none}
+.fbot{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font:400 12px var(--fm);color:var(--dim);border-top:1px solid var(--line);padding-top:22px}
+@media(max-width:800px){.fgrid{grid-template-columns:1fr 1fr}}
+
+/* ===== NorthStar AI ===== */
+#aiorb{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:70;width:62px;height:62px;border-radius:50%;border:0;cursor:pointer;background:radial-gradient(circle at 30% 30%,#9ffaff,var(--cy) 35%,var(--bl) 80%);box-shadow:0 0 0 1px rgba(0,240,255,.5),0 0 40px -4px var(--cy);display:grid;place-items:center;color:var(--void);transition:transform .4s var(--ease)}
+#aiorb:before{content:"";position:absolute;inset:-6px;border-radius:50%;border:1px solid var(--cy);animation:orb 2.6s var(--ease) infinite;pointer-events:none}
+@keyframes orb{from{transform:scale(.9);opacity:.9}to{transform:scale(1.4);opacity:0}}
+#aiorb:hover{transform:scale(1.08) rotate(-10deg)}
+.drawer{position:fixed;right:18px;bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:70;width:min(420px,calc(100% - 24px));height:min(620px,calc(100svh - 150px));display:flex;flex-direction:column;padding:0!important;background:rgba(7,12,24,.94)!important;transform-origin:bottom right;transition:opacity .35s,transform .45s var(--ease),visibility .35s;opacity:0;visibility:hidden;transform:translateY(20px) scale(.96)}
+.drawer.open{opacity:1;visibility:visible;transform:none}
+.aihead{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.aihead .av{width:38px;height:38px;border-radius:50%}
+.aihead b{display:block;font:700 15px var(--fd)}
+.aihead small{font:500 10.5px var(--fm);letter-spacing:.1em;color:var(--ok);text-transform:uppercase}
+.chat{display:flex;flex-direction:column;min-height:0;flex:1}
+.chatlog{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px;overscroll-behavior:contain}
+.msg{max-width:88%;padding:11px 14px;border-radius:14px;font-size:14.5px;line-height:1.55;animation:pop .4s var(--ease);overflow-wrap:anywhere}
+.msg.u{align-self:flex-end;background:var(--grad);color:var(--void);border-bottom-right-radius:4px;font-weight:600}
+.msg.a{align-self:flex-start;background:rgba(0,240,255,.06);border:1px solid var(--line);color:var(--tx);border-bottom-left-radius:4px}
+.msg.a ul{margin:6px 0;padding-left:18px}
+.typing span{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--cy);margin-right:4px;animation:pulse 1s infinite}
+.chatin{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}
+.chatin .btn{flex:none}
+.sugg{display:flex;gap:6px;flex-wrap:wrap;padding:0 16px 12px}
+.sugg button{background:rgba(0,240,255,.05);border:1px solid var(--line);color:var(--mut);border-radius:99px;padding:6px 12px;font:500 12px var(--fb);cursor:pointer;transition:color .2s,border-color .2s}
+.sugg button:hover{color:var(--tx);border-color:var(--cy)}
+.aigrid{display:grid;grid-template-columns:1.15fr 1fr;gap:18px;align-items:start}
+.aigrid>*{min-width:0}
+.aichat{height:700px;display:flex;flex-direction:column;padding:0!important;overflow:hidden}
+@media(max-width:1000px){.aigrid{grid-template-columns:1fr}.aichat{height:580px}}
+.modr{padding:12px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
+.modr:last-child{border-bottom:0}
+.modr q{display:block;color:var(--tx);margin:6px 0;font-style:italic}
+.pick{display:grid;grid-template-columns:56px 1fr;gap:14px;align-items:center;padding:14px 0;border-bottom:1px dashed var(--line)}
+.pick .sc{width:56px;height:56px;border-radius:14px;display:grid;place-items:center;font:800 18px var(--fd);border:1px solid var(--line2);color:var(--cy)}
+.srvc .tags,.dealc .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.tagc{font:500 11px var(--fm);padding:3px 9px;border-radius:99px;background:rgba(0,240,255,.07);color:var(--mut)}
+.dealc .disc{font:800 34px/1 var(--fd);letter-spacing:-.02em;margin:14px 0 4px}
+.keybox{padding:14px;border-radius:12px;border:1px dashed var(--warn);font:500 13px var(--fm);color:var(--warn);word-break:break-all;margin:14px 0}
+.owner{display:inline-flex;align-items:center;gap:10px;font:500 11px var(--fm);letter-spacing:.16em;text-transform:uppercase;color:var(--mut)}
+.owner b{color:var(--tx);font-weight:700}
+@media(max-width:640px){#aiorb{width:54px;height:54px;right:14px}.drawer{right:12px;bottom:84px;height:calc(100svh - 170px)}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}.ml>span{transform:none}.js .rv{opacity:1;transform:none}}
+html.calm *,html.calm *:before,html.calm *:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+html.calm .ml>span{transform:none}html.calm .rv{opacity:1!important;transform:none!important}
+@media(max-width:640px){.wrap{width:calc(100% - 32px)}.brand{font-size:16px}.brand svg{width:26px;height:26px}.hero .meta{gap:20px}.hero .meta b{font-size:24px}.card{padding:22px;border-radius:18px}.page{padding-top:118px}.hero .lead{font-size:16px}.bignum{font-size:52px}}
+</style>
+</head>
+<body>
+<script>document.documentElement.classList.add("js")</script>
+<div id="boot" data-testid="boot-loader" aria-hidden="true"><div class="bx">
+ <svg width="74" height="74" viewBox="0 0 48 48" fill="none"><defs><linearGradient id="bg1" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#00F0FF"/><stop offset="1" stop-color="#0072FF"/></linearGradient></defs><path d="M24 5 40.5 14.5v19L24 43 7.5 33.5v-19z" stroke="url(#bg1)" stroke-width="2.5"/><path d="M17 17l14 14M31 17 17 31" stroke="url(#bg1)" stroke-width="3.5" stroke-linecap="round"/></svg>
+ <div class="bn">ESTABLISHING SECURE CHANNEL · <b id="bootn">000</b></div>
+ <div class="bl"><i></i></div>
+</div></div>
+<div class="atmo" aria-hidden="true"><div class="grid"></div><div class="glow1"></div><div class="glow2"></div><div class="scan"></div><div class="noise"></div></div>
+<div id="progress"></div>
+<nav class="nav" id="nav" aria-label="Main" data-testid="main-nav">
+ <a class="brand" href="#home" data-testid="nav-logo" aria-label="Portal-X home"><span id="logo1"></span>PORTAL<b>-X</b></a>
+ <div class="nlinks" id="nlinks"></div>
+ <div class="nauth" id="nauth"></div>
+ <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false" data-testid="nav-burger"></button>
+</nav>
+<div class="mnav" id="mnav" data-testid="mobile-menu"></div>
+<div id="app"></div>
+<footer data-testid="site-footer"><div class="wrap">
+ <div class="fgrid">
+  <div><a class="brand" href="#home" style="display:flex;margin-bottom:16px" data-testid="footer-logo"><span id="logo2"></span>PORTAL<b>-X</b></a><p style="max-width:300px;font-size:14px">Digital security &amp; membership ecosystem with NorthStar AI. Run and owned by <b style="color:var(--tx)">Good Morning NorthStar News</b>.</p></div>
+  <div><h5>Platform</h5><a href="#ai" data-testid="footer-ai">NorthStar AI</a><a href="#network" data-testid="footer-network">Server Network</a><a href="#memberships" data-testid="footer-memberships">Memberships</a><a href="#security" data-testid="footer-security">Security Center</a><a href="#discord" data-testid="footer-discord">Discord Connect</a><a href="#rewards" data-testid="footer-rewards">Rewards</a><a href="#marketplace" data-testid="footer-marketplace">Marketplace</a></div>
+  <div><h5>Company</h5><a href="#about" data-testid="footer-about">About</a><a href="#support" data-testid="footer-support">Support</a><a href="mailto:security@portal-x.online" data-testid="footer-email">security@portal-x.online</a></div>
+  <div><h5>Legal</h5><a href="#legal" data-testid="footer-terms">Terms of Service</a><a href="#legal" data-testid="footer-privacy">Privacy Policy</a><a href="#legal" data-testid="footer-refunds">Refund Policy</a><a href="#legal" data-testid="footer-cookies">Cookie Policy</a></div>
+ </div>
+ <div class="fword" aria-hidden="true">PORTAL-X</div>
+ <div class="fbot"><span>© <span id="yr"></span> Portal-X · portal-x.online</span><span data-testid="footer-owner">Run and owned by Good Morning NorthStar News</span></div>
+</div></footer>
+<div id="toasts" role="status" aria-live="polite" data-testid="toast-region"></div>
+<button id="aiorb" data-act="orb" aria-label="Open NorthStar AI" data-testid="ai-orb-btn"></button>
+<div class="drawer card" id="drawer" role="dialog" aria-label="NorthStar AI chat" data-testid="ai-drawer"></div>
+
+<script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+<script>
+"use strict";
+/* ================= CONFIG — production data comes from the secure API; no secrets live here ================= */
+const API_BASE=(window.PORTALX_API_ORIGIN||"")+"/api"; /* set window.PORTALX_API_ORIGIN if this file is hosted away from the API */
+const OWNER="Good Morning NorthStar News";
+const SID=(()=>{let s=localStorage.getItem("psx_sid");if(!s){s="s_"+[...crypto.getRandomValues(new Uint32Array(3))].join("");localStorage.setItem("psx_sid",s)}return s})();
+const myS=()=>{try{const v=JSON.parse(localStorage.getItem("psx_srv")||"[]");return Array.isArray(v)?v:[]}catch{return[]}};
+const saveS=v=>localStorage.setItem("psx_srv",JSON.stringify(v));
+async function api(p,o={}){const r=await fetch(API_BASE+p,{...o,headers:{"Content-Type":"application/json",...(o.headers||{})}});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(typeof j.detail=="string"?j.detail:Array.isArray(j.detail)?j.detail.map(d=>String(d.msg||"").replace(/^Value error, /,"")).join("; "):"Request failed ("+r.status+")");return j}
+const DUR=[["weekly","Weekly","/wk",1],["monthly","Monthly","/mo",4.345],["six","6 Months","/6 mo",26.07],["yearly","Yearly","/yr",52.14]];
+const PLANS={
+explorer:{n:"Explorer",t:"Standard",p:{weekly:2,monthly:6,six:30,yearly:55},f:["Personal member dashboard","Discord account linking","Basic login security","Account verification","Login and session history","Community access","Basic support"]},
+advanced:{n:"Advanced",t:"Enhanced",p:{weekly:4,monthly:14,six:70,yearly:130},f:["Everything in Explorer","Advanced security dashboard","Detailed activity reports","Suspicious login notifications","Priority support","Exclusive digital tools","Premium dashboard themes","Early feature access"]},
+elite:{n:"Elite",t:"Premium",p:{weekly:8,monthly:28,six:140,yearly:260},f:["Everything in Advanced","All premium security features","VIP support","Exclusive member-only areas","Beta testing opportunities","Exclusive rewards","Priority access to new services","Premium digital resources"]}};
+const S={user:null,dur:"monthly",sec:"overview",plan:null,discord:null,pts:1250,mfa:false,accent:"cyan",
+sessions:[{d:"Chrome · Windows",ip:"203.0.113.x",t:"Now",cur:1},{d:"Safari · iPhone",ip:"198.51.100.x",t:"2 days ago"},{d:"Firefox · Linux",ip:"192.0.2.x",t:"6 days ago"}],
+hist:[],tickets:[{id:1042,c:"Billing",s:"In Progress",t:"Invoice question"}],
+users:[{u:"nova",e:"nova@example.com",p:"elite",st:"active"},{u:"kestrel",e:"k@example.com",p:"explorer",st:"active"},{u:"vex",e:"vex@example.com",p:"advanced",st:"suspended"},{u:"orbit",e:"orbit@example.com",p:"advanced",st:"active"}],
+perks:[{n:"Cyber Blue theme",t:"advanced",on:1},{n:"Beta channel",t:"elite",on:1},{n:"Profile badge pack",t:"explorer",on:0}],
+ann:[{t:"Welcome to Portal-X",k:"Platform"}],
+audit:[{t:"System",a:"Platform initialised (demo)"}],
+redeemed:[]};
+
+/* ================= UTILITIES ================= */
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money=n=>"$"+Number(n).toFixed(2).replace(/\.00$/,"");
+const slug=s=>String(s).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+const I={spark:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>',send:'<path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/>',trash:'<path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15"/>',shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',check:'<path d="M5 12l5 5L20 7"/>',lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',key:'<circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3 21 2M17 6l3 3"/>',hash:'<path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/>',link:'<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21h4"/>',gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',card:'<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>',gift:'<rect x="3" y="8" width="18" height="4"/><path d="M5 12v9h14v-9M12 8v13M12 8S10 3 7.5 4.5 9 8 12 8zm0 0s2-5 4.5-3.5S15 8 12 8z"/>',cart:'<path d="M3 3h2l2.5 12h11l2-8H6.5"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/>',life:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="m4.9 4.9 4.3 4.3m5.6 5.6 4.3 4.3m-4.3-9.9 4.3-4.3M4.9 19.1l4.3-4.3"/>',grid:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',activity:'<path d="M3 12h4l3-8 4 16 3-8h4"/>',logout:'<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/>',arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',zap:'<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',crown:'<path d="M3 7l4 5 5-7 5 7 4-5-2 12H5z"/>',server:'<rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="18" height="7" rx="1.5"/><path d="M7 7.5h.01M7 16.5h.01"/>',discord:'<path d="M8.5 6.5C6.6 6.8 5 7.4 4 8 2.3 11.5 1.9 15 2.3 18.4c1.6 1.2 3.3 2 5 2.4l1.2-2M15.5 6.5c1.9.3 3.5.9 4.5 1.5 1.7 3.5 2.1 7 1.7 10.4-1.6 1.2-3.3 2-5 2.4l-1.2-2M7 17c3.3 1.4 6.7 1.4 10 0M7.5 8.2c3-1 6-1 9 0"/><circle cx="9" cy="13.2" r="1.3"/><circle cx="15" cy="13.2" r="1.3"/>',x:'<path d="M6 6l12 12M18 6 6 18"/>',menu:'<path d="M4 7h16M4 12h16M4 17h10"/>',eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',copy:'<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>',upload:'<path d="M12 16V4M7 9l5-5 5 5M4 20h16"/>',refresh:'<path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/>',globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 3 2.5 15 0 18M12 3c-2.5 3-2.5 15 0 18"/>'};
+const ic=(n,s=20)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]||""}</svg>`;
+const LOGO=(s=30)=>`<svg width="${s}" height="${s}" viewBox="0 0 48 48" fill="none" aria-hidden="true"><defs><linearGradient id="lgx" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#00F0FF"/><stop offset="1" stop-color="#0072FF"/></linearGradient></defs><path d="M24 5 40.5 14.5v19L24 43 7.5 33.5v-19z" stroke="url(#lgx)" stroke-width="3"/><path d="M17 17l14 14M31 17 17 31" stroke="url(#lgx)" stroke-width="4" stroke-linecap="round"/></svg>`;
+const toast=m=>{const t=document.createElement("div");t.className="toast";t.dataset.testid="toast";t.innerHTML=ic("check",16)+esc(m);$("#toasts").append(t);setTimeout(()=>t.remove(),3200)};
+const audit=a=>S.audit.unshift({t:new Date().toLocaleTimeString(),a});
+let firstLoad=true;
+/* masked headline: lines -> spans with staggered delays */
+const ML=(lines,base=0)=>lines.map((l,i)=>`<span class="ml"><span style="--d:${(base+i*.12).toFixed(2)}s">${l}</span></span>`).join("");
+const cardWrap=(inner,cls="",tid="",extra="")=>`<div class="card ${cls}" data-tilt ${tid?`data-testid="${tid}"`:""} ${extra}><span class="spot"></span><span class="corner tl"></span><span class="corner br"></span>${inner}</div>`;
+const feat=(icn,t,d,i=0)=>`<div class="rv" style="--rd:${i*.08}s">${cardWrap(`<div class="ico">${ic(icn,22)}</div><h3>${t}</h3><p>${d}</p>`,"","feature-"+slug(t))}</div>`;
+const ph=(k,lines,p)=>`<header class="ph"><span class="kick fade-up">${k}</span><h1>${ML(lines,.1)}</h1><p class="fade-up" style="--d:.5s">${p}</p></header>`;
+
+/* ================= PRICING ================= */
+const durIdx=()=>DUR.findIndex(d=>d[0]==S.dur);
+const segCtl=()=>`<div class="seg" role="group" aria-label="Billing duration" data-testid="duration-toggle"><i style="--i:${durIdx()}"></i>${DUR.map(d=>`<button class="${S.dur==d[0]?"on":""}" data-act="dur" data-v="${d[0]}" data-testid="duration-${d[0]}">${d[1]}</button>`).join("")}</div>`;
+const tiersInner=(buy=1)=>{const d=DUR[durIdx()];return `${segCtl()}<div class="plans">${Object.entries(PLANS).map(([k,p],i)=>{const pr=p.p[S.dur],base=p.p.weekly*d[3],save=Math.round((1-pr/base)*100);
+return cardWrap(`<div class="tn"><span class="pill cy">${p.t}</span>${k=="advanced"?`<span class="pill" style="color:var(--ok)"><span class="dot"></span>Most chosen</span>`:k=="elite"?ic("crown",22):""}</div>
+<h3>${p.n}</h3><div class="pr" data-testid="price-${k}">${money(pr)}<small>${d[2]}</small></div>
+<div class="sv">${S.dur!="weekly"&&save>0?`≈ ${money(pr/d[3])}/wk · save ${save}% vs weekly`:"Flexible weekly billing"}</div>
+<ul class="chk">${p.f.map(f=>`<li>${esc(f)}</li>`).join("")}</ul>
+${buy?`<button class="btn ${k=="advanced"?"":"ghost"} block" data-act="buy" data-v="${k}" data-testid="choose-plan-${k}" ${S.plan==k?"disabled":""}>${S.plan==k?"Current plan":"Choose "+p.n} ${ic("arrow",16)}</button>`:""}`,"plan "+(k=="advanced"?"hot":""),"plan-card-"+k)}).join("")}</div>
+<p class="fine">Recurring billing through PayPal Subscriptions. Free registration is available without a plan. Cancel renewal anytime; paid access continues to the paid-through date. Prices shown are demo values and are admin-configurable.</p>`};
+const tiers=(buy=1)=>`<div id="tiers">${tiersInner(buy)}</div>`;
+
+/* ================= SECURITY TOOLS (run locally in the browser) ================= */
+const toolsUI=()=>`<div class="grid3">
+<div class="rv">${cardWrap(`<div class="ico">${ic("key",22)}</div><h3>Passphrase generator</h3><p>Generated locally with the Web Crypto API. Never transmitted or logged.</p>
+<div class="pwout"><code id="pw" data-testid="password-output">—</code><button class="btn ghost sm" data-act="copy" aria-label="Copy password" data-testid="password-copy-btn">${ic("copy",16)}</button></div>
+<label class="lb" for="pl">Length · <span id="plv">20</span></label><input type="range" id="pl" min="8" max="64" value="20" data-testid="password-length-slider">
+<label class="chkl"><input type="checkbox" id="ps" checked data-testid="password-symbols-checkbox">Include symbols</label>
+<div class="rowb"><span class="mono cy" id="pent" data-testid="password-entropy" style="font-size:12px"></span><button class="btn sm" data-act="gen" data-testid="password-generate-btn">${ic("refresh",16)}Generate</button></div>`,"","tool-password")}</div>
+<div class="rv" style="--rd:.08s">${cardWrap(`<div class="ico">${ic("hash",22)}</div><h3>File integrity checker</h3><p>SHA-256 hashing runs entirely on your device. Compare against a publisher's checksum.</p>
+<label class="drop mt" for="hf" data-testid="hash-file-dropzone">${ic("upload",22).replace("<svg",'<svg style="margin:0 auto 8px"')}Choose a file to hash<input type="file" id="hf" hidden data-testid="hash-file-input"></label>
+<div class="hashout" id="hout" data-testid="hash-output"></div>
+<label class="lb" for="hcmp">Expected hash (optional)</label><input class="inp" id="hcmp" placeholder="Paste checksum to compare" data-testid="hash-compare-input">
+<div class="err" id="hres" data-testid="hash-compare-result" style="color:var(--mut)"></div>`,"","tool-hash")}</div>
+<div class="rv" style="--rd:.16s">${cardWrap(`<div class="ico">${ic("globe",22)}</div><h3>URL safety indicators</h3><p>Local heuristic checks only. Not a guarantee a link is safe; production adds reputable threat-intel sources.</p>
+<label class="lb" for="url">Paste a link</label><input class="inp" id="url" placeholder="https://example.com/login" autocomplete="off" data-testid="url-check-input">
+<div class="urlr" id="urlr" data-testid="url-check-results"><span style="color:var(--dim)">Awaiting input…</span></div>`,"","tool-url")}</div></div>`;
+function genPass(){const L=+($("#pl")?.value||20),sym=$("#ps")?.checked,pool="ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789"+(sym?"!@#$%^&*-_=+?":"");const a=new Uint32Array(L);crypto.getRandomValues(a);const pw=[...a].map(x=>pool[x%pool.length]).join("");if($("#pw")){$("#pw").textContent=pw;$("#plv").textContent=L;$("#pent").textContent="≈ "+Math.round(L*Math.log2(pool.length))+" bits entropy"}}
+function urlCheck(v){const out=$("#urlr");if(!out)return;if(!v.trim()){out.innerHTML='<span style="color:var(--dim)">Awaiting input…</span>';return}
+let u;try{u=new URL(/^\w+:\/\//.test(v)?v:"https://"+v)}catch{out.innerHTML='<span class="bad">✕ Not a valid URL</span>';return}
+const h=u.hostname,c=[[u.protocol=="https:","Uses HTTPS"],[!/^\d+\.\d+\.\d+\.\d+$/.test(h),"Hostname is not a raw IP"],[!h.includes("xn--"),"No punycode look-alike"],[h.split(".").length<=4,"Reasonable subdomain depth"],[!v.includes("@"),"No embedded credentials (@)"],[v.length<120,"Normal length"],[!/\.(zip|mov|tk|gq|ml|cf)$/.test(h),"No high-risk TLD"]];
+const pass=c.filter(x=>x[0]).length;out.innerHTML=c.map(x=>`<span class="${x[0]?"ok":"warn"}">${x[0]?"✓":"!"} ${x[1]}</span>`).join("")+`<span class="mt cy">${pass}/${c.length} indicators clear — advisory only</span>`}
+
+/* ================= HOME ================= */
+const home=()=>{const b=firstLoad?2.25:.15;return `
+<section class="hero" id="hero" data-testid="hero-section">
+ <canvas id="portal" aria-hidden="true"></canvas><div class="spotlight"></div>
+ <div class="hin">
+  <div id="heroText">
+   <span class="kick fade-up" style="--d:${b}s">A Good Morning NorthStar News platform</span>
+   <h1 style="margin-top:26px" data-testid="hero-title">${ML(["One portal.",'<span class="o">Complete</span>','<span class="gt">control.</span>'],b+.05)}</h1>
+   <p class="lead fade-up" style="--d:${b+.55}s">Account protection, memberships, Discord identity linking, rewards and support in a single secure platform. No always-on bot required.</p>
+   <div class="ctas fade-up" style="--d:${b+.7}s"><a class="btn" href="#register" data-testid="hero-create-account-btn">Create account ${ic("arrow",16)}</a><a class="btn ghost" href="#memberships" data-testid="hero-view-memberships-btn">View memberships</a></div>
+   <div class="meta fade-up" style="--d:${b+.85}s"><div><b>3</b>Membership tiers</div><div><b>12</b>Billing plans</div><div><b>0</b>Secrets in browser</div></div>
+  </div>
+  <div class="fade-up" style="--d:${b+.4}s">${cardWrap(`<div class="ch"><i></i><i></i><i></i><span>Portal-X · Command</span></div>
+   <div class="row"><span>Auth layer</span><span class="ok">Argon2id ●</span></div>
+   <div class="row"><span>Transport</span><span class="cy">TLS 1.3</span></div>
+   <div class="row"><span>Discord</span><span class="cy">OAuth2 + PKCE</span></div>
+   <div class="row"><span>Payments</span><span class="ok">Webhook-verified</span></div>
+   <div class="row"><span>Entitlements</span><span>Server-side only</span></div>
+   <div class="log" id="hlog" data-testid="hero-telemetry-log"></div>`,"console","hero-console")}</div>
+ </div>
+ <div class="scrollcue">SCROLL<i></i></div>
+</section>
+<div class="marquee" aria-hidden="true">${[0,1].map(()=>`<div class="mtk">${["One portal","Complete control","Account protection","Memberships","Discord OAuth2","Rewards","Marketplace"].map((w,i)=>`<span class="${i%2?"":"f"}">${w}</span><em>✦</em>`).join("")}</div>`).join("")}</div>
+
+<section class="sec"><div class="wrap">
+ <div class="sh"><div class="rv"><span class="kick">01 · The Platform</span><h2 style="margin-top:20px">Everything you need.<br><span class="gt">Nothing you don't.</span></h2></div><p class="rv" style="--rd:.1s">One account to protect your identity, link Discord, manage your subscription, earn rewards and get help, run through one command center.</p></div>
+ <div class="bento">
+  <div class="b-a rv">${cardWrap(`<span class="pill cy"><span class="dot"></span>Security Guardian</span><h3 style="font-size:clamp(26px,3vw,40px);margin-top:20px">Account protection that reports only what it can verify.</h3><p>MFA and passkeys, session control, login events and an audit trail you can actually read.</p>
+   <div class="radar"><div class="sw"></div><span class="bp" style="left:30%;top:28%"></span><span class="bp" style="left:68%;top:62%;animation-delay:.6s"></span><span class="bp" style="left:58%;top:22%;animation-delay:1.2s;background:var(--cy);box-shadow:0 0 14px var(--cy)"></span><div class="rsh">${ic("shield",64)}</div></div>`,"","bento-security")}</div>
+  <div class="b-b rv" style="--rd:.08s">${cardWrap(`<div class="ico">${ic("crown",22)}</div><h3>Three tiers. Four cadences.</h3><p>Explorer, Advanced and Elite billed weekly, monthly, 6-monthly or yearly.</p><div class="tierbars bt"><div>Explorer<i style="width:45%"></i></div><div>Advanced<i style="width:72%;transition-delay:.15s"></i></div><div>Elite<i style="width:100%;transition-delay:.3s"></i></div></div>`,"","bento-memberships")}</div>
+  <div class="b-c rv" style="--rd:.16s">${cardWrap(`<div class="ico">${ic("discord",22)}</div><h3>Discord identity, linked.</h3><p>Official OAuth2 with PKCE and the identify scope. Tokens never touch the browser.</p><div class="flow bt"><div class="nd">${ic("user")}</div><div class="ln"></div><div class="nd">${ic("discord")}</div><div class="ln"></div><div class="nd">${LOGO(24)}</div></div>`,"","bento-discord")}</div>
+  <div class="b-d rv">${cardWrap(`<div class="ico">${ic("gift",22)}</div><h3>Rewards</h3><p>Earn points for milestones and security setup.</p><div class="bt"><div class="bignum gt" data-count="1250">0</div><div class="bar"><i style="width:62%"></i></div></div>`,"","bento-rewards")}</div>
+  <div class="b-e rv" style="--rd:.08s">${cardWrap(`<div class="ico">${ic("cart",22)}</div><h3>Marketplace</h3><p>Member resources through authenticated, expiring links.</p><div class="signed bt">/dl/elite-toolkit?<b>sig=9f3a…e1</b>&amp;exp=<b id="exp">300</b>s</div>`,"","bento-marketplace")}</div>
+  <div class="b-f rv" style="--rd:.16s">${cardWrap(`<div class="ico">${ic("life",22)}</div><h3>Support</h3><p>Tickets you can track from open to resolved.</p><div class="stlist bt">${["Open","In Progress","Waiting for Member","Resolved","Closed"].map((s,i)=>`<span class="pill" style="color:${["var(--cy)","var(--warn)","var(--mut)","var(--ok)","var(--dim)"][i]}">${s}</span>`).join("")}</div>`,"","bento-support")}</div>
+ </div>
+</div></section>
+
+<section class="sec" style="padding-top:20px"><div class="wrap">
+ <div class="sh"><div class="rv"><span class="kick">02 · Checkout sequence</span><h2 style="margin-top:20px">Paid access is <span class="gt">earned by verified events</span>, never by a redirect.</h2></div><p class="rv" style="--rd:.1s">PayPal Subscriptions power all 12 tier and duration combinations. Card data never touches Portal-X.</p></div>
+ <div class="steps">${["Choose a tier and billing duration.","Backend selects the matching PayPal plan.","You approve the subscription at PayPal.","PayPal sends events to the webhook.","Portal-X verifies the webhook signature.","Events are processed idempotently.","Entitlements update from verified status."].map((s,i)=>`<div class="step rv" style="--rd:${i*.07}s" data-testid="checkout-step-${i+1}"><div class="n">0${i+1}</div><p>${s}</p></div>`).join("")}</div>
+</div></section>
+
+<section class="sec"><div class="wrap">
+ <div class="sh"><div class="rv"><span class="kick">03 · Protection stack</span><h2 style="margin-top:20px">Encrypted end to end of the stack.</h2></div><p class="rv" style="--rd:.1s">The security boundary is the backend. Secrets, keys, permissions and entitlement checks stay server-side.</p></div>
+ <div class="stack">${[["Transport","TLS 1.3 preferred","HTTPS"],["Passwords","Argon2id hashing","Never reversible"],["Sensitive data","AES-256-GCM","Unique nonces"],["Sessions","Secure · HttpOnly · SameSite","Rotated on auth"],["Payments","PayPal-hosted flow","No raw cards"],["API secrets","Managed secrets store","Never in index.html"]].map((r,i)=>`<div class="r rv" style="--rd:${i*.05}s" data-testid="stack-row-${slug(r[0])}"><span>${r[0]}</span><h4>${r[1]}</h4><span class="cy">${r[2]}</span></div>`).join("")}</div>
+</div></section>
+
+<section class="sec"><div class="wrap">
+ <div class="sh"><div class="rv"><span class="kick">04 · Memberships</span><h2 style="margin-top:20px">Pick your level of <span class="gt">control.</span></h2></div><p class="rv" style="--rd:.1s">Switch the cadence and watch the savings recalculate instantly.</p></div>
+ <div class="rv">${tiers()}</div>
+</div></section>
+
+<section class="sec" data-testid="home-ai-section"><div class="wrap">
+ <div class="sh"><div class="rv"><span class="kick">05 · NorthStar AI</span><h2 style="margin-top:20px">A mini AI that <span class="gt">runs the network.</span></h2></div><p class="rv" style="--rd:.1s">Powered by Google Gemini. It reads the deals every connected server shares, matches them to you, sends digests to Discord webhooks and judges messages, all without a bot sitting in your server.</p></div>
+ <div class="grid4">${feat("spark","Ask anything","Live chat about security, plans, Discord and the network.")}${feat("gift","Deals matched to you","Gemini ranks offers from every server by your interests.",1)}${feat("send","Webhook delivery","AI-written deal digests posted straight into server channels.",2)}${feat("shield","Moderation, no bot","Gemini decides allow, warn, delete or timeout and reports it.",3)}</div>
+ <div class="flex mt2" style="gap:12px"><a class="btn" href="#ai" data-testid="home-ai-btn">${ic("spark",16)}Talk to NorthStar AI</a><a class="btn ghost" href="#network" data-testid="home-network-btn">Register your server</a></div>
+</div></section>
+<section class="sec"><div class="wrap"><div class="cta rv" data-testid="cta-section">
+ <span class="kick">Ready when you are</span><h2 style="margin:26px 0 30px">Take<br><span class="gt">control.</span></h2>
+ <p style="max-width:480px;font-size:18px;margin-bottom:34px">Free registration. Try the basic tools before you ever choose a plan.</p>
+ <div class="ctas" style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="#register" data-testid="cta-register-btn">Create free account ${ic("arrow",16)}</a><a class="btn ghost" href="#security" data-testid="cta-security-btn">Explore security tools</a></div>
+</div></div></section>`};
+
+/* ================= PUBLIC PAGES ================= */
+const dscCard=()=>{const d=S.discord;return cardWrap(`<div class="rowb"><div class="flex" style="gap:16px"><div class="ico" style="width:58px;height:58px">${ic("discord",28)}</div><div><h3 style="margin:0 0 6px">Discord</h3>${d?`<span class="pill" style="color:var(--ok)" data-testid="discord-status"><span class="dot"></span>Connected</span>`:`<span class="pill" style="color:var(--warn)" data-testid="discord-status">Not connected</span>`}</div></div>
+${d?`<button class="btn ghost" data-act="dsc-off" data-testid="discord-disconnect-btn">Disconnect</button>`:`<button class="btn" data-act="dsc-on" data-testid="discord-connect-btn">${ic("discord",16)}Connect Discord</button>`}</div>
+${d?`<p class="mt mono" data-testid="discord-identity">${esc(d.name)} · ID ${esc(d.id)}</p>`:`<p class="mt">Authorization is requested with the minimum scope (identify).</p>`}
+${S.hist.length?`<h4 class="mt2" style="font-size:16px">Connection history</h4><ul class="chk">${S.hist.map(h=>`<li>${esc(h)}</li>`).join("")}</ul>`:""}
+<p class="mt" style="font-size:13px;color:var(--dim)">Automatic role assignment needs a Discord application with role permissions or Linked Roles. Portal-X does not advertise it until it's implemented.</p>`,"","discord-card")};
+const tickForm=()=>cardWrap(`<form data-f="tk" data-testid="ticket-form"><h3 style="margin-top:0">Open a ticket</h3><label class="lb" for="c">Category</label><select class="inp" id="c" data-testid="ticket-category-select">${["Account access","Billing","Membership","Discord integration","Security concerns","Technical problems","General inquiries"].map(c=>`<option>${c}</option>`).join("")}</select><label class="lb" for="s">Subject</label><input class="inp" id="s" required data-testid="ticket-subject-input"><label class="lb" for="m">Describe the issue</label><textarea class="inp" id="m" rows="4" data-testid="ticket-message-input"></textarea><button class="btn mt" data-testid="ticket-submit-btn">Submit ticket ${ic("arrow",16)}</button></form>`,"","ticket-card","style='max-width:620px'");
+const REWARDS=[["Membership discount",500,"gift"],["Promo code",300,"zap"],["Profile badge",150,"shield"],["Temporary upgrade",900,"crown"]];
+const MARKET=[["Security checklist template","explorer","Free","file"],["Dashboard theme pack","advanced","200 pts","grid"],["Elite toolkit","elite","600 pts","key"]];
+const P={
+home,
+about:()=>`<div class="page"><div class="wrap">${ph("About Portal-X",["Built for",'<span class="gt">control.</span>'],"Portal-X is a web-based security, membership and digital services platform, run and owned by Good Morning NorthStar News. Users, plans, perks and subscriptions are all managed through the website. No continuously running bot, no source edits for day-to-day operations.")}
+<div class="grid3">${feat("server","Server-verified","All paid features are enforced server-side, never in the browser.")}${feat("lock","Encrypted","TLS, Argon2id passwords and AES-256-GCM for sensitive data, with keys in a managed vault.",1)}${feat("activity","Auditable","Every admin action and membership change is recorded in an audit log.",2)}</div>
+<div class="sh mt2" style="margin-top:110px"><div class="rv"><span class="kick">Architecture</span><h2 style="margin-top:20px">The stack.</h2></div><p class="rv">A single primary HTML application backed by a secure API. Recommended arrangement, to be confirmed at implementation.</p></div>
+<div class="stack">${[["Frontend","HTML5 · CSS3 · JS","Single index.html"],["Hosting","Cloudflare Pages","Root domain"],["API","Cloudflare Workers","Auth & business logic"],["Database","Cloudflare D1","Accounts & records"],["Storage","Cloudflare R2","Protected files"],["Payments","PayPal Subscriptions","Recurring billing"],["Identity","Discord OAuth2","Account linking"]].map((r,i)=>`<div class="r rv" style="--rd:${i*.04}s"><span>${r[0]}</span><h4>${r[1]}</h4><span class="cy">${r[2]}</span></div>`).join("")}</div>
+<div class="sh" style="margin-top:110px"><div class="rv"><span class="kick">Roadmap</span><h2 style="margin-top:20px">Seven phases to launch.</h2></div></div>
+<div class="steps">${["Foundation","Security","Membership","Discord","Administration","Ecosystem","Launch"].map((s,i)=>`<div class="step rv" style="--rd:${i*.06}s"><div class="n">0${i+1}</div><p><b style="color:var(--tx)">${s}</b><br>${["Branding, single-file frontend, public pages","Backend, auth, MFA, sessions, encryption","3 tiers, 12 plans, PayPal, entitlements","OAuth2 linking & connection management","Admin center, plans, perks, logs, analytics","Rewards, marketplace, tickets, notifications","Security review, tests, production deploy"][i]}</p></div>`).join("")}</div>
+<p class="mt2">Contact: <a href="mailto:security@portal-x.online">security@portal-x.online</a></p></div></div>`,
+memberships:()=>`<div class="page"><div class="wrap">${ph("Memberships",["Three levels.",'<span class="gt">Four cadences.</span>'],"Start free. Upgrade when you need more monitoring, reports, tools and recognition.")}${tiers()}
+<div class="grid2" style="margin-top:80px">
+<div class="rv">${cardWrap(`<div class="ico">${ic("card",22)}</div><h3>Subscription rules</h3><ul class="chk"><li>View plan, status, interval, renewal date and payment history</li><li>Cancel recurring renewal through a clear account flow</li><li>Upgrades and downgrades follow explicit proration rules</li><li>Failed payments trigger notifications and a grace policy</li><li>Cancelling renewal keeps access until the paid-through date</li><li>Every entitlement change is recorded in the audit log</li></ul>`,"","subscription-rules")}</div>
+<div class="rv" style="--rd:.1s">${cardWrap(`<div class="ico">${ic("grid",22)}</div><h3>Billing matrix</h3><p>12 PayPal plans: one per tier and duration.</p><div class="tbl mt"><table style="min-width:0"><thead><tr><th>Tier</th>${DUR.map(d=>`<th>${d[1]}</th>`).join("")}</tr></thead><tbody>${Object.values(PLANS).map((p,i)=>`<tr><td style="color:var(--tx)">${p.n}</td>${DUR.map((d,j)=>`<td><span class="cy">${money(p.p[d[0]])}</span><br><span style="color:var(--dim);font-size:11px">Plan ${i*4+j+1}</span></td>`).join("")}</tr>`).join("")}</tbody></table></div>`,"","billing-matrix")}</div></div></div></div>`,
+security:()=>`<div class="page"><div class="wrap">${ph("Security Center",["Tools that",'<span class="gt">tell the truth.</span>'],"Practical security utilities with clearly described limits. We never claim to detect threats unless the monitoring actually exists.")}
+<div class="grid4">${feat("lock","Multi-factor auth","Authenticator apps and passkeys.")}${feat("eye","Session management","Review and revoke active sessions.",1)}${feat("activity","Login monitoring","Failed attempts, new devices and suspicious logins.",2)}${feat("server","Audit trail","Account changes logged and visible to you.",3)}</div>
+<div class="sh" style="margin-top:110px"><div class="rv"><span class="kick">Live utilities</span><h2 style="margin-top:20px">Try them now. <span class="gt">Right here.</span></h2></div><p class="rv">These run 100% in your browser. Nothing you type or upload leaves this page.</p></div>${toolsUI()}</div></div>`,
+discord:()=>`<div class="page"><div class="wrap">${ph("Discord Connect",["Your identity,",'<span class="gt">linked.</span>'],"Link your Discord identity through official OAuth2: authorization code + PKCE, identify scope only. Codes are exchanged on the backend.")}
+<div class="grid2"><div class="rv">${S.user?dscCard():cardWrap(`<div class="ico">${ic("discord",22)}</div><h3>Sign in to link Discord</h3><p>You need a Portal-X account before linking an identity.</p><a class="btn mt" href="#login" data-testid="discord-signin-btn">Sign in ${ic("arrow",16)}</a>`)}</div>
+<div class="rv" style="--rd:.1s">${cardWrap(`<h3 style="margin-top:0">Security requirements</h3><ul class="chk"><li>Validate state and redirect URI</li><li>Only the scopes required</li><li>Tokens stored only when necessary, encrypted server-side</li><li>Client secrets never in index.html</li><li>Duplicate identity claims prevented</li><li>Connection and disconnection events recorded</li></ul>`)}</div></div></div></div>`,
+rewards:()=>`<div class="page"><div class="wrap">${ph("Rewards",["Earn it.",'<span class="gt">Spend it.</span>'],"Earn points through milestones, eligible referrals, security setup and events. Paid plans do not grant unlimited points; eligibility rules are admin-configured.")}
+${S.user?`<div class="rv" style="margin-bottom:24px">${cardWrap(`<div class="rowb"><div><span class="kick">Your balance</span><div class="bignum gt" data-testid="rewards-balance">${S.pts.toLocaleString()} pts</div></div><div style="flex:1;max-width:420px"><div class="bar"><i style="width:${Math.min(100,S.pts/20)}%"></i></div><p class="mt" style="font-size:13px">Next milestone at 2,000 pts</p></div></div>`)}</div>`:""}
+<div class="grid4">${REWARDS.map((r,i)=>`<div class="rv" style="--rd:${i*.08}s">${cardWrap(`<div class="ico">${ic(r[2],22)}</div><h3>${r[0]}</h3><div class="mono cy" style="font-size:14px">${r[1]} pts</div>${S.user?`<button class="btn sm mt" data-act="redeem" data-v="${r[1]}" data-n="${r[0]}" data-testid="redeem-${slug(r[0])}-btn">Redeem</button>`:`<a class="btn ghost sm mt" href="#login" data-testid="rewards-signin-${slug(r[0])}">Sign in to redeem</a>`}`,"","reward-"+slug(r[0]))}</div>`).join("")}</div></div></div>`,
+marketplace:()=>`<div class="page"><div class="wrap">${ph("Marketplace",["Resources,",'<span class="gt">secured.</span>'],"Downloads use authenticated, time-limited links. No permanent public URLs. Eligibility is validated server-side.")}${market()}</div></div>`,
+support:()=>`<div class="page"><div class="wrap">${ph("Support",["We've got",'<span class="gt">your back.</span>'],"Open a ticket and track it from your dashboard. Statuses: Open, In Progress, Waiting for Member, Resolved, Closed.")}
+<div class="grid2" style="align-items:start"><div class="rv">${S.user?tickForm():cardWrap(`<div class="ico">${ic("life",22)}</div><h3>Sign in to open a ticket</h3><p>Tickets are tied to your account so you can track replies.</p><a class="btn mt" href="#login" data-testid="support-signin-btn">Sign in ${ic("arrow",16)}</a>`)}</div>
+<div class="rv" style="--rd:.1s">${["Account access","Billing","Membership","Discord","Security","Technical","General"].map(c=>`<details class="acc"><summary>${c}</summary><p>Choose “${c}” when opening a ticket. Support staff see only the information required to handle it.</p></details>`).join("")}</div></div></div></div>`,
+legal:()=>`<div class="page"><div class="wrap">${ph("Legal & Policies",["The fine",'<span class="gt">print.</span>'],"Drafts to be finalised with legal counsel before launch.")}
+<div class="rv">${[["Terms of Service","Rules for using Portal-X, account responsibilities and acceptable use."],["Privacy Policy","What we collect, why, and how long we keep it. We collect only data needed for stated functions."],["Cookie Policy","Essential cookies for secure sessions; analytics only with consent where required."],["Subscription & Cancellation","Renewals, cancellation flow and paid-through access."],["Refund Policy","Refunds, reversals and disputes reconciled against PayPal events."],["Data Retention","Retention periods, including financial and fraud-prevention exceptions."],["Account Deletion & Export","Request your data export or deletion from My Account."]].map(x=>`<details class="acc" data-testid="legal-${slug(x[0])}"><summary>${x[0]}</summary><p>${x[1]}</p></details>`).join("")}</div></div></div>`,
+ai:()=>`<div class="page"><div class="wrap">${ph("NorthStar AI · Powered by Gemini",["The mini AI",'<span class="gt">that runs it.</span>'],"Ask anything, find your deals across every connected server, and preview moderation decisions without putting a bot in your server. Run and owned by "+OWNER+".")}
+<div class="aigrid"><div class="card aichat rv" data-testid="ai-chat-panel">${aiHead()}${chatUI("page")}</div>
+<div style="display:flex;flex-direction:column;gap:18px">
+<div class="rv" style="--rd:.08s">${cardWrap(`<div class="ico">${ic("gift",22)}</div><h3>Deal matcher</h3><p>Gemini reads every deal shared by servers in the network and ranks the best ones for you.</p><form data-f="match" class="mt"><label class="lb" for="mi">Your interests</label><input class="inp" id="mi" maxlength="300" placeholder="gaming, security software, news" data-testid="match-interests-input"><button class="btn mt" data-testid="match-submit-btn">${ic("spark",16)}Find my deals</button></form><div id="matchOut" data-testid="match-results"></div>`,"","deal-matcher")}</div>
+<div class="rv" style="--rd:.16s">${cardWrap(`<div class="ico">${ic("shield",22)}</div><h3>Moderation preview</h3><p>Paste messages as <span class="mono cy">name: message</span>, one per line. Gemini decides allow, warn, delete or timeout.</p><form data-f="mod" class="mt"><label class="lb" for="mr">Server rules (optional)</label><textarea class="inp" id="mr" rows="2" maxlength="1500" placeholder="No spam, no scams, be respectful" data-testid="mod-rules-input"></textarea><label class="lb" for="mm">Messages</label><textarea class="inp" id="mm" rows="4" data-testid="mod-messages-input">alex: gg everyone, great match tonight
+freegift: FREE NITRO claim now at disc0rd-gifts.ru !!!</textarea>${myS().length?`<label class="lb" for="ms">Report to server</label><select class="inp" id="ms" data-testid="mod-server-select">${myS().map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join("")}</select><label class="chkl"><input type="checkbox" id="ml" data-testid="mod-send-log-checkbox">Send report to that server's webhook</label>`:""}<button class="btn mt" data-testid="mod-submit-btn">${ic("shield",16)}Review messages</button></form><div id="modOut" data-testid="mod-results"></div>`,"","moderation-preview")}</div>
+</div></div>
+<div class="sh" style="margin-top:110px"><div class="rv"><span class="kick">No bot. An app.</span><h2 style="margin-top:20px">How NorthStar AI <span class="gt">reaches your server.</span></h2></div><p class="rv">Portal-X uses a Discord app that calls Discord only when there's work to do. There's no always-on bot process.</p></div>
+<div class="stack">${[["Data","Servers opt in via the Network","Live"],["Brain","Google Gemini · "+"server-side key","Live"],["Delivery","Discord channel webhooks","Live"],["Decisions","AI moderation verdicts + reports","Live"],["Enforcement","Portal-X Discord app (delete / timeout)","Pending app setup"]].map((r,i)=>`<div class="r rv" style="--rd:${i*.05}s"><span>${r[0]}</span><h4>${r[1]}</h4><span class="${r[2]=="Live"?"ok":"warn"}">${r[2]}</span></div>`).join("")}</div></div></div>`,
+network:()=>`<div class="page"><div class="wrap">${ph("Server Network",["Every server.",'<span class="gt">One brain.</span>'],"Discord servers opt in to share their deals. NorthStar AI matches them to members and delivers AI-written digests into each server through webhooks.")}
+<div class="tiles" id="netStats" data-testid="network-stats">${["Servers","Deals","Webhooks live","AI model"].map(l=>tile(l,"—","","net-stat-"+slug(l))).join("")}</div>
+<div class="grid2 mt2" style="align-items:start">
+<div class="rv">${cardWrap(`<div class="ico">${ic("server",22)}</div><h3>Register your server</h3><p>Public details appear in the directory. The webhook URL stays private on the server.</p><form data-f="srv" novalidate data-testid="register-server-form"><div class="grid2" style="gap:0 14px"><div><label class="lb" for="rn">Server name</label><input class="inp" id="rn" maxlength="60" data-testid="srv-name-input"></div><div><label class="lb" for="rcat">Category</label><select class="inp" id="rcat" data-testid="srv-category-select">${["Gaming","News & Media","Tech","Crypto","Art & Creative","Education","Business","Other"].map(c=>`<option>${c}</option>`).join("")}</select></div><div><label class="lb" for="rm">Members</label><input class="inp" id="rm" type="number" min="0" data-testid="srv-members-input"></div><div><label class="lb" for="rt">Tags</label><input class="inp" id="rt" placeholder="gaming, deals" data-testid="srv-tags-input"></div></div><label class="lb" for="rd">Description</label><input class="inp" id="rd" maxlength="400" data-testid="srv-desc-input"><label class="lb" for="ri">Invite link (optional)</label><input class="inp" id="ri" maxlength="120" placeholder="discord.gg/…" data-testid="srv-invite-input"><label class="lb" for="rw">Discord webhook URL (optional)</label><input class="inp" id="rw" placeholder="https://discord.com/api/webhooks/…" data-testid="srv-webhook-input"><p style="font-size:12px;margin-top:6px;color:var(--dim)">Server Settings → Integrations → Webhooks → New Webhook → Copy URL</p><label class="chkl"><input type="checkbox" id="rc" data-testid="srv-consent-checkbox">I manage this server and agree to list it publicly</label><div class="err" id="er" data-testid="srv-error"></div><button class="btn" data-testid="srv-submit-btn">Register server ${ic("arrow",16)}</button></form>`,"","register-server-card")}</div>
+<div class="rv" style="--rd:.1s"><h3 style="font-size:28px;margin-bottom:16px">My servers</h3><div id="mySrv" data-testid="my-servers">${myS().length?myS().map(s=>cardWrap(`<div class="rowb"><h3 style="margin:0">${esc(s.name)}</h3><span class="pill" style="color:var(${s.hook?"--ok":"--warn"})">${s.hook?"Webhook live":"No webhook"}</span></div><div class="flex mt" style="gap:8px"><button class="btn sm" data-act="adeal" data-v="${esc(s.id)}" data-testid="add-deal-${esc(s.id)}">${ic("gift",14)}Share a deal</button>${s.hook?`<button class="btn ghost sm" data-act="push" data-v="${esc(s.id)}" data-testid="push-digest-${esc(s.id)}">${ic("send",14)}Send AI digest</button>`:""}<button class="btn danger sm" data-act="rmsrv" data-v="${esc(s.id)}" data-testid="remove-server-${esc(s.id)}">${ic("trash",14)}</button></div>`,"mt")).join(""):cardWrap(`<p>No servers registered from this browser yet. Register one to share deals and receive AI digests.</p>`)}</div></div></div>
+<div class="sh" style="margin-top:110px"><div class="rv"><span class="kick">Directory</span><h2 style="margin-top:20px">Connected servers.</h2></div></div><div class="grid3" id="srvList" data-testid="server-directory"><p>Loading…</p></div>
+<div class="sh" style="margin-top:110px"><div class="rv"><span class="kick">Live feed</span><h2 style="margin-top:20px">Deals across <span class="gt">the network.</span></h2></div><a class="btn ghost rv" href="#ai" style="justify-self:start" data-testid="network-match-btn">${ic("spark",16)}Let AI match deals for me</a></div><div class="grid3" id="dealList" data-testid="deal-feed"><p>Loading…</p></div></div></div>`,
+login:()=>authShell(`<form data-f="login" novalidate data-testid="login-form"><span class="kick">Welcome back</span><h1>Sign in</h1><p>Demo: any valid email. Use <span class="cy mono">admin@…</span> for the admin view.</p>
+<label class="lb" for="e">Email</label><input class="inp" id="e" type="email" autocomplete="username" required data-testid="login-email-input">
+<label class="lb" for="p">Password</label><input class="inp" id="p" type="password" autocomplete="current-password" required data-testid="login-password-input">
+<div class="err" id="er" data-testid="login-error"></div><button class="btn block" data-testid="login-submit-btn">Sign in ${ic("arrow",16)}</button>
+<p class="mt" style="font-size:14px">New here? <a href="#register" data-testid="login-to-register-link">Create account</a></p></form>`,["Welcome","back."]),
+register:()=>authShell(`<form data-f="reg" novalidate data-testid="register-form"><span class="kick">Free account</span><h1>Create account</h1>
+<label class="lb" for="u">Username</label><input class="inp" id="u" autocomplete="username" data-testid="register-username-input">
+<label class="lb" for="e">Email</label><input class="inp" id="e" type="email" autocomplete="email" data-testid="register-email-input">
+<label class="lb" for="p">Password (12+ characters)</label><input class="inp" id="p" type="password" autocomplete="new-password" data-testid="register-password-input">
+<label class="lb" for="p2">Confirm password</label><input class="inp" id="p2" type="password" autocomplete="new-password" data-testid="register-confirm-input">
+<label class="chkl"><input type="checkbox" id="t1" data-testid="register-terms-checkbox">I accept the&nbsp;<a href="#legal">Terms of Service</a></label>
+<label class="chkl"><input type="checkbox" id="t2" data-testid="register-privacy-checkbox">I accept the&nbsp;<a href="#legal">Privacy Policy</a></label>
+<div class="err" id="er" data-testid="register-error"></div><button class="btn block" data-testid="register-submit-btn">Register ${ic("arrow",16)}</button></form>`,["Enter the","portal."])
+};
+const aiHead=(close)=>`<div class="aihead"><div class="av">${ic("spark",20)}</div><div><b>NorthStar AI</b><small>● Online · Gemini</small></div>${close?`<button class="btn ghost sm" style="margin-left:auto" data-act="dclose" aria-label="Close chat" data-testid="ai-drawer-close">${ic("x",14)}</button>`:""}</div>`;
+const chatUI=k=>`<div class="chat"><div class="chatlog" data-lenis-prevent data-testid="chat-log-${k}"></div><div class="sugg">${["How do memberships work?","How do you moderate without a bot?","How do I add my server?"].map((q,i)=>`<button data-act="ask" data-v="${esc(q)}" data-testid="chat-suggest-${k}-${i}">${q}</button>`).join("")}</div><form data-f="chat" class="chatin"><input class="inp" name="q" placeholder="Ask NorthStar AI…" autocomplete="off" maxlength="2000" data-testid="chat-input-${k}"><button class="btn" aria-label="Send" data-testid="chat-send-${k}">${ic("send",16)}</button></form></div>`;
+S.chat=[{r:"a",t:"Hi, I'm **NorthStar AI**, the Portal-X mini AI powered by Google Gemini. Ask me about security, memberships, Discord or the Server Network."}];S.busy=false;
+const md=t=>esc(t).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").split("\n").map(l=>/^\s*[*-]\s+/.test(l)?"<li>"+l.replace(/^\s*[*-]\s+/,"")+"</li>":l).join("\n").replace(/(<li>.*?<\/li>\n?)+/g,m=>"<ul>"+m.replace(/\n/g,"")+"</ul>").replace(/\n/g,"<br>");
+function paintChat(){$$(".chatlog").forEach(l=>{l.innerHTML=S.chat.map(m=>`<div class="msg ${m.r}">${m.t?md(m.t):'<span class="typing"><span></span><span style="animation-delay:.2s"></span><span style="animation-delay:.4s"></span></span>'}</div>`).join("");l.scrollTop=l.scrollHeight})}
+async function ask(q){q=String(q||"").trim();if(S.busy||!q)return;S.busy=true;S.chat.push({r:"u",t:q},{r:"a",t:""});paintChat();const m=S.chat[S.chat.length-1];
+ try{const res=await fetch(API_BASE+"/ai/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({session_id:SID,message:q})});
+  if(!res.ok||!res.body){const j=await res.json().catch(()=>({}));throw new Error(typeof j.detail=="string"?j.detail:"NorthStar AI is unavailable.")}
+  const rd=res.body.getReader(),dec=new TextDecoder();let buf="";
+  for(;;){const {done,value}=await rd.read();if(done)break;buf+=dec.decode(value,{stream:true});let i;while((i=buf.indexOf("\n\n"))>=0){const line=buf.slice(0,i).replace(/^data: /,"");buf=buf.slice(i+2);if(line=="[DONE]")continue;try{const j=JSON.parse(line);if(j.t)m.t+=j.t;if(j.error)m.t+=(m.t?"\n\n":"")+"⚠ "+j.error}catch{}}paintChat()}
+ }catch(e){m.t="⚠ "+(e.message=="Failed to fetch"?"Couldn't reach NorthStar AI. Check your connection.":e.message)}
+ if(!m.t)m.t="⚠ No answer received. Try again.";S.busy=false;paintChat()}
+async function loadNet(){
+ const [st,sv,dl]=await Promise.all([api("/network/stats"),api("/network/servers"),api("/network/deals")].map(p=>p.catch(()=>null)));
+ const T=$("#netStats");if(!T)return;
+ if(!st){T.insertAdjacentHTML("afterend",'<p class="bad mt">Network is offline right now.</p>');return}
+ T.innerHTML=[["Servers",st.servers??0],["Deals",st.deals??0],["Webhooks live",st.webhooks??0],["AI model",String(st.model||"gemini").replace(/-preview$/,"").replace(/^gemini-/i,"Gemini ").replace(/-/g," ")]].map(x=>tile(x[0],esc(x[1]),"","net-stat-"+slug(x[0]))).join("");
+ const srv=Array.isArray(sv)?sv:[],deals=Array.isArray(dl)?dl:[];
+ $("#srvList").innerHTML=srv.length?srv.map(s=>cardWrap(`<div class="rowb"><span class="pill cy">${esc(s.category)}</span>${s.sample?'<span class="pill" style="color:var(--dim)">Sample</span>':s.webhook?'<span class="pill" style="color:var(--ok)"><span class="dot"></span>Webhook</span>':""}</div><h3>${esc(s.name)}</h3><p style="font-size:14px">${esc(s.description||"")}</p><p class="mono mt" style="font-size:12px;color:var(--dim)">${+s.members>0?(+s.members).toLocaleString()+" members":"Members not listed"}${s.invite?` · <span class="cy">${esc(s.invite)}</span>`:""}</p><div class="tags">${(s.tags||[]).map(t=>`<span class="tagc">#${esc(t)}</span>`).join("")}</div>`,"srvc","server-card-"+slug(s.name))).join(""):"<p>No servers yet.</p>";
+ $("#dealList").innerHTML=deals.length?deals.map(d=>cardWrap(`<div class="rowb"><span class="mono" style="font-size:12px;color:var(--dim)">${esc(d.server_name)}</span>${d.sample?'<span class="pill" style="color:var(--dim)">Sample</span>':""}</div><div class="disc gt">${esc(d.discount||"DEAL")}</div><h3 style="margin-top:6px">${esc(d.title)}</h3><p style="font-size:14px">${esc(d.description||"")}</p>${/^https?:\/\//.test(d.url||"")?`<a class="btn ghost sm mt" href="${esc(d.url)}" target="_blank" rel="noopener noreferrer">Open deal ${ic("arrow",14)}</a>`:""}<div class="tags">${(d.tags||[]).map(t=>`<span class="tagc">#${esc(t)}</span>`).join("")}</div>`,"dealc","deal-card-"+slug(d.title))).join(""):"<p>No deals yet. Register a server and share the first one.</p>";
+ $$("#srvList [data-tilt],#dealList [data-tilt]").forEach(tilt);
+}
+const authShell=(form,h)=>`<div class="auth"><div class="vis" data-testid="auth-visual"><div class="ring"><div></div><div></div><div></div>${LOGO(80).replace('<svg','<svg style="position:absolute;inset:38%;width:24%;height:24%"')}</div><span class="kick">Portal-X</span><h2 style="margin-top:16px">${ML([h[0],`<span class="gt">${h[1]}</span>`],.1)}</h2></div><div class="fm">${form}</div></div>`;
+const market=()=>`<div class="grid3">${MARKET.map((x,i)=>`<div class="rv" style="--rd:${i*.08}s">${cardWrap(`<div class="rowb"><div class="ico">${ic(x[3]=="file"?"copy":x[3],22)}</div><span class="pill cy">${PLANS[x[1]].n}+</span></div><h3>${x[0]}</h3><p class="mono cy">${x[2]}</p><button class="btn ghost sm mt" data-act="mk" data-testid="market-get-${slug(x[0])}">Get ${ic("arrow",14)}</button>`,"","market-"+slug(x[0]))}</div>`).join("")}</div>`;
+
+/* ================= MEMBER DASHBOARD ================= */
+const SECS=[["overview","Overview","grid"],["account","My Account","user"],["security","Security Center","shield"],["tools","Security Tools","key"],["discord","Discord","discord"],["membership","Membership","crown"],["billing","Billing History","card"],["rewards","Rewards","gift"],["market","Marketplace","cart"],["tickets","Support Tickets","life"],["notifs","Notifications","bell"],["prefs","Preferences","gear"]];
+const score=()=>Math.min(100,30+(S.mfa?35:0)+(S.discord?15:0)+(S.plan?10:0)+(S.sessions.length<=2?10:0));
+const tile=(l,v,cls="",tid="")=>cardWrap(`<div class="l">${l}</div><div class="v ${cls}" data-testid="${tid}">${v}</div>`,"tile");
+const D={
+overview:()=>{const sc=score(),C=2*Math.PI*72;return `<h2>Welcome, <span class="gt">${esc(S.user.name)}</span></h2>
+<div class="tiles">${tile("Membership",S.plan?PLANS[S.plan].n:"Free","","dash-membership")}${tile("Discord",S.discord?"Linked":"Not linked",S.discord?"ok":"warn","dash-discord")}${tile("Reward points",S.pts.toLocaleString(),"cy","dash-points")}${tile("MFA",S.mfa?"On":"Off",S.mfa?"ok":"warn","dash-mfa")}</div>
+<div class="grid2 mt">${cardWrap(`<div class="flex"><div class="gauge" data-testid="protection-gauge"><svg viewBox="0 0 170 170"><defs><linearGradient id="gg"><stop stop-color="#00F0FF"/><stop offset="1" stop-color="#0072FF"/></linearGradient></defs><circle class="t" cx="85" cy="85" r="72"/><circle class="v" cx="85" cy="85" r="72" stroke-dasharray="${C}" stroke-dashoffset="${C}" data-off="${C*(1-sc/100)}"/></svg><div class="c"><div><b>${sc}</b><span>PROTECTION</span></div></div></div>
+<div style="flex:1;min-width:200px"><h3 style="margin-top:0">Account checklist</h3><ul class="chk">${[[S.mfa,"Enable MFA","mfa"],[S.discord,"Link Discord","dsc-on"],[S.plan,"Choose a membership",null],[S.sessions.length<=2,"Review active sessions",null]].map(x=>`<li class="${x[0]?"":"no"}" style="${x[0]?"text-decoration:line-through;opacity:.6":""}">${x[1]}</li>`).join("")}</ul><p style="font-size:12px;color:var(--dim)">Based on settings we can verify. Not a threat guarantee.</p></div></div>`)}
+${cardWrap(`<h3 style="margin-top:0">Recent activity</h3><ul class="chk">${[...S.audit.slice(0,4).map(a=>a.a),"Signed in from Chrome · Windows"].map(x=>`<li>${esc(x)}</li>`).join("")}</ul><div class="flex" style="gap:10px"><button class="btn sm" data-act="sec" data-v="tools" data-testid="quick-tools-btn">Security tools</button><button class="btn ghost sm" data-act="sec" data-v="tickets" data-testid="quick-tickets-btn">Tickets</button></div>`)}</div>`},
+account:()=>`<h2>My Account</h2>${cardWrap(`<div class="flex"><div class="av" style="width:70px;height:70px;font-size:30px;border-radius:18px">${esc(S.user.name[0]||"U").toUpperCase()}</div><div><h3 style="margin:0">${esc(S.user.name)}</h3><p class="mono" style="font-size:13px">${esc(S.user.email)}</p></div></div>
+<div class="grid2"><div><label class="lb">Username</label><input class="inp" value="${esc(S.user.name)}" disabled data-testid="account-username"></div><div><label class="lb">Email</label><input class="inp" value="${esc(S.user.email)}" disabled data-testid="account-email"></div></div>
+<p class="mt" style="font-size:14px">Sensitive changes require re-authentication server-side.</p><div class="flex mt" style="gap:10px"><button class="btn ghost sm" data-act="x" data-testid="export-data-btn">Export my data</button><button class="btn danger sm" data-act="x" data-testid="delete-account-btn">Request deletion</button></div>`,"","account-card","style='max-width:760px'")}`,
+security:()=>`<h2>Security Guardian</h2><div class="tiles t3">${tile("Protection",S.mfa?"Strong":"Basic",S.mfa?"ok":"warn","sec-protection")}${cardWrap(`<div class="l">MFA</div><button class="btn sm mt" data-act="mfa" data-testid="toggle-mfa-btn">${S.mfa?"Disable":"Enable"} MFA</button>`,"tile")}${tile("Failed logins (30d)","0","","sec-failed")}</div>
+${cardWrap(`<h3 style="margin-top:0">Active sessions</h3><div class="tbl"><table><thead><tr><th>Device</th><th>IP</th><th>Last active</th><th></th></tr></thead><tbody>${S.sessions.map((s,i)=>`<tr data-testid="session-row-${i}"><td>${s.d}</td><td>${s.ip}</td><td>${s.t}</td><td>${s.cur?'<span class="pill" style="color:var(--ok)">This device</span>':`<button class="btn ghost sm" data-act="rev" data-v="${i}" data-testid="revoke-session-${i}">Revoke</button>`}</td></tr>`).join("")}</tbody></table></div>`,"mt")}`,
+tools:()=>`<h2>Security Tools</h2>${toolsUI()}`,
+discord:()=>`<h2>Discord Connections</h2>${dscCard()}`,
+membership:()=>`<h2>Membership</h2>${tiers()}`,
+billing:()=>`<h2>Billing History</h2>${S.plan?`<div class="tbl"><table><thead><tr><th>Date</th><th>Plan</th><th>Amount</th><th>Reference</th><th>Status</th></tr></thead><tbody><tr><td>${new Date().toLocaleDateString()}</td><td>${PLANS[S.plan].n} · ${DUR[durIdx()][1]}</td><td>${money(PLANS[S.plan].p[S.dur])}</td><td>I-DEMO${Math.abs(S.user.email.length*7919)}</td><td><span class="pill" style="color:var(--ok)">Completed</span></td></tr></tbody></table></div><p class="fine">Demo record. Production lists PayPal transaction records stored server-side.</p>`:cardWrap(`<div class="ico">${ic("card",22)}</div><h3>No payments yet</h3><p>Choose a membership to see billing records here.</p><button class="btn sm mt" data-act="sec" data-v="membership" data-testid="billing-choose-plan-btn">View plans</button>`)}`,
+rewards:()=>`<h2>Rewards</h2>${cardWrap(`<div class="bignum gt" data-testid="dash-rewards-balance">${S.pts.toLocaleString()} pts</div><div class="bar"><i style="width:${Math.min(100,S.pts/20)}%"></i></div><p class="mt">Next milestone at 2,000 pts. <a href="#rewards" data-testid="browse-rewards-link">Browse rewards</a></p>${S.redeemed.length?`<h4 class="mt2" style="font-size:16px">Redemption history</h4><ul class="chk">${S.redeemed.map(r=>`<li>${esc(r)}</li>`).join("")}</ul>`:""}`)}`,
+market:()=>`<h2>Marketplace</h2>${market()}`,
+tickets:()=>`<h2>Support Tickets</h2><div class="tbl"><table><thead><tr><th>#</th><th>Category</th><th>Subject</th><th>Status</th></tr></thead><tbody>${S.tickets.map(t=>`<tr data-testid="ticket-row-${t.id}"><td>${t.id}</td><td>${esc(t.c)}</td><td>${esc(t.t)}</td><td><span class="pill cy">${t.s}</span></td></tr>`).join("")}</tbody></table></div><div class="mt2">${tickForm()}</div>`,
+notifs:()=>`<h2>Notifications</h2>${cardWrap(`<ul class="chk">${S.ann.map(a=>`<li>${esc(a.k)}: ${esc(a.t)}</li>`).join("")}${S.mfa?"":"<li>Recommendation: enable MFA</li>"}${S.discord?"<li>Discord connected</li>":""}</ul>`,"","notifs-card")}`,
+prefs:()=>`<h2>Preferences</h2><div class="grid2">${cardWrap(`<h3 style="margin-top:0">Notifications</h3>${["Renewal reminders","Feature announcements","Ticket updates"].map(x=>`<label class="chkl"><input type="checkbox" checked data-testid="pref-${slug(x)}">${x}</label>`).join("")}<label class="chkl"><input type="checkbox" checked disabled>Critical security alerts (always on)</label>`)}
+${cardWrap(`<h3 style="margin-top:0">Theme &amp; accessibility</h3><label class="lb">Accent</label><div class="flex" style="gap:10px">${[["cyan","#00F0FF"],["matrix","#00FF88"],["plasma","#B98CFF"]].map(a=>`<button class="btn ${S.accent==a[0]?"":"ghost"} sm" data-act="accent" data-v="${a[0]}" data-testid="accent-${a[0]}"><span style="width:10px;height:10px;border-radius:50%;background:${a[1]};box-shadow:0 0 8px ${a[1]}"></span>${a[0]}</button>`).join("")}</div>
+<label class="chkl mt"><input type="checkbox" id="calm" ${document.documentElement.classList.contains("calm")?"checked":""} data-testid="pref-reduce-motion">Reduce motion</label>`)}</div>`
+};
+const dash=()=>`<div class="page"><div class="wrap"><div class="dash"><nav class="side card" aria-label="Dashboard" data-testid="dashboard-sidebar"><div class="who"><div class="av">${esc(S.user.name[0]||"U").toUpperCase()}</div><div><div style="font-weight:700">${esc(S.user.name)}</div><div class="mono" style="font-size:11px;color:var(--dim)">${S.plan?PLANS[S.plan].n.toUpperCase():"FREE"} MEMBER</div></div></div>${SECS.map(s=>`<button class="${S.sec==s[0]?"on":""}" data-act="sec" data-v="${s[0]}" data-testid="dash-nav-${s[0]}">${ic(s[2],18)}${s[1]}</button>`).join("")}</nav><div class="dmain" data-testid="dashboard-main">${D[S.sec]()}</div></div></div></div>`;
+
+/* ================= ADMIN (UI only; real authorization is enforced by the API) ================= */
+const admin=()=>`<div class="page"><div class="wrap">${ph("Admin Center",["Command",'<span class="gt">center.</span>'],'<span class="warn">Demo data.</span> Every action must be permission-checked and audit-logged by the server.')}
+<div class="tiles t3">${[["Users",S.users.length],["Active members",S.users.filter(u=>u.st=="active").length],["Pending tickets",S.tickets.length],["Security alerts",0],["Gross revenue","$0.00"],["Net proceeds","$0.00"]].map(x=>tile(x[0],x[1],"","admin-stat-"+slug(x[0]))).join("")}</div>
+<div class="rowb mt2"><h3 style="font-size:28px">Users</h3><input class="inp" id="us" placeholder="Search users…" style="max-width:280px" data-testid="admin-user-search"></div>
+<div class="tbl mt"><table><thead><tr><th>User</th><th>Email</th><th>Plan</th><th>Status</th><th></th></tr></thead><tbody>${S.users.map((u,i)=>`<tr data-q="${esc((u.u+" "+u.e+" "+u.p).toLowerCase())}" data-testid="admin-user-row-${esc(u.u)}"><td style="color:var(--tx)">${esc(u.u)}</td><td>${esc(u.e)}</td><td>${PLANS[u.p].n}</td><td><span class="pill" style="color:var(${u.st=="active"?"--ok":"--bad"})">${u.st}</span></td><td><button class="btn ghost sm" data-act="susp" data-v="${i}" data-testid="admin-toggle-user-${esc(u.u)}">${u.st=="active"?"Suspend":"Reinstate"}</button></td></tr>`).join("")}</tbody></table></div>
+<div class="rowb mt2"><h3 style="font-size:28px">Plan pricing · ${DUR[durIdx()][1]}</h3>${segCtl()}</div>
+<div class="grid3">${Object.entries(PLANS).map(([k,p])=>cardWrap(`<div class="l mono" style="font-size:11px;letter-spacing:.14em;color:var(--dim)">${p.t.toUpperCase()}</div><h3>${p.n}</h3><label class="lb" for="pr-${k}">Price (USD)</label><input class="inp" id="pr-${k}" type="number" min="0" step="0.5" value="${p.p[S.dur]}" data-price="${k}" data-testid="admin-price-${k}">`,"tile")).join("")}</div>
+<div class="grid2 mt2" style="align-items:start">
+<div><h3 style="font-size:28px;margin-bottom:16px">Perks</h3><div class="tbl"><table style="min-width:0"><thead><tr><th>Perk</th><th>Tier</th><th>Enabled</th></tr></thead><tbody>${S.perks.map((p,i)=>`<tr><td>${esc(p.n)}</td><td>${PLANS[p.t].n}</td><td><button class="btn ${p.on?"":"ghost"} sm" data-act="perk" data-v="${i}" data-testid="admin-perk-toggle-${i}">${p.on?"On":"Off"}</button></td></tr>`).join("")}</tbody></table></div></div>
+<div><h3 style="font-size:28px;margin-bottom:16px">Announcements</h3>${cardWrap(`<ul class="chk" style="margin-top:0">${S.ann.map(a=>`<li>${esc(a.k)}: ${esc(a.t)}</li>`).join("")}</ul><form data-f="ann" class="flex" style="gap:10px;flex-wrap:nowrap"><input class="inp" id="at" placeholder="New announcement" data-testid="admin-announcement-input"><button class="btn sm" data-testid="admin-announcement-submit">Publish</button></form>`)}</div></div>
+<div class="grid2 mt2" style="align-items:start">
+<div><h3 style="font-size:28px;margin-bottom:16px">Role separation</h3><div class="grid2">${[["Support Staff","Ticket access only"],["Moderator","Moderation & account review"],["Administrator","Platform operations"],["Owner","Full authority"]].map(r=>cardWrap(`<h4 style="font-size:18px">${r[0]}</h4><p style="font-size:13px;margin-top:6px">${r[1]}</p>`,"tile")).join("")}</div></div>
+<div><h3 style="font-size:28px;margin-bottom:16px">Audit log</h3><div class="tbl" data-testid="admin-audit-log"><table style="min-width:0"><thead><tr><th>Time</th><th>Action</th></tr></thead><tbody>${S.audit.slice(0,8).map(a=>`<tr><td>${esc(a.t)}</td><td>${esc(a.a)}</td></tr>`).join("")}</tbody></table></div></div></div>
+</div></div>`;
+
+/* ================= ROUTER / RENDER ================= */
+const PUB=[["ai","NorthStar AI"],["network","Network"],["about","About"],["memberships","Memberships"],["security","Security"],["discord","Discord"],["rewards","Rewards"],["marketplace","Marketplace"],["support","Support"]];
+let lenis=null,route="home";
+function navUI(h){
+ $("#nlinks").innerHTML=PUB.map(p=>`<a href="#${p[0]}" class="${h==p[0]?"on":""}" data-testid="nav-${p[0]}">${p[1]}</a>`).join("");
+ $("#nauth").innerHTML=S.user?`<a class="btn ghost sm hide-m" href="#dashboard" data-testid="nav-dashboard">${ic("grid",14)}Dashboard</a>${S.user.admin?`<a class="btn ghost sm hide-m" href="#admin" data-testid="nav-admin">Admin</a>`:""}<button class="btn sm" data-act="out" data-testid="nav-logout">${ic("logout",14)}<span class="hide-m">Log out</span></button>`:`<a class="btn ghost sm hide-m" href="#login" data-testid="nav-login">Login</a><a class="btn sm" href="#register" data-testid="nav-register">Register</a>`;
+ const ml=[["home","Home"],...PUB,...(S.user?[["dashboard","Dashboard"],...(S.user.admin?[["admin","Admin"]]:[])]:[["login","Login"]])];
+ $("#mnav").innerHTML=ml.map((p,i)=>`<a href="#${p[0]}" class="${h==p[0]?"on":""}" style="transition-delay:${.04*i}s" data-testid="mnav-${p[0]}">${p[1]}</a>`).join("")+`<div class="mfoot"><a href="mailto:security@portal-x.online" data-testid="mnav-email">security@portal-x.online</a></div>`;
+ closeMenu();
+}
+function render(keep){
+ let h=location.hash.slice(1)||"home";
+ if((h=="dashboard"||h=="admin")&&!S.user)h="login";
+ if(h=="admin"&&!S.user.admin)h="dashboard";
+ if(!P[h]&&h!="dashboard"&&h!="admin")h="home";
+ route=h;navUI(h);
+ $("#app").innerHTML=h=="dashboard"?dash():h=="admin"?admin():P[h]();
+ if(!keep){lenis?lenis.scrollTo(0,{immediate:true}):window.scrollTo(0,0)}
+ after();firstLoad=false;
+}
+function after(){
+ const io="IntersectionObserver" in window?new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");counter(e.target);io.unobserve(e.target)}}),{threshold:.08,rootMargin:"0px 0px -6% 0px"}):null;
+ $$(".rv").forEach(el=>io?io.observe(el):el.classList.add("in"));
+ $$("[data-tilt]").forEach(tilt);
+ $$(".gauge .v").forEach(c=>requestAnimationFrame(()=>requestAnimationFrame(()=>c.style.strokeDashoffset=c.dataset.off)));
+ if($("#portal"))portalScene($("#portal"));
+ if($("#hlog"))heroLog();
+ if($("#pw"))genPass();
+ if($("#netStats"))loadNet();
+ paintChat();
+}
+function counter(root){root.querySelectorAll("[data-count]").forEach(el=>{const to=+el.dataset.count,t0=performance.now();const f=t=>{const p=Math.min(1,(t-t0)/1600),e=1-Math.pow(1-p,4);el.textContent=Math.round(to*e).toLocaleString();if(p<1)requestAnimationFrame(f)};requestAnimationFrame(f)})}
+const fine=matchMedia("(hover:hover) and (pointer:fine)").matches;
+function tilt(el){if(!fine||el.dataset.tb)return;el.dataset.tb=1;const hot=el.classList.contains("console");
+ el.addEventListener("pointermove",e=>{const r=el.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;el.style.setProperty("--mx",x*100+"%");el.style.setProperty("--my",y*100+"%");if(!el.classList.contains("tile")&&!el.closest(".side"))el.style.transform=`perspective(1000px) rotateX(${(.5-y)*(hot?10:5)}deg) rotateY(${(x-.5)*(hot?12:6)}deg)`});
+ el.addEventListener("pointerleave",()=>{el.style.transform=""})}
+function heroLog(){const el=$("#hlog");const L=["session.rotate ok","mfa.challenge passed","webhook.verify BILLING.SUBSCRIPTION.ACTIVATED","oauth.state validated","entitlement.sync elite → active","ratelimit.window clean","audit.write admin.price.update","tls.handshake 1.3","hash.argon2id verified"];let i=0;
+ const tick=()=>{if(!el.isConnected)return;const t=new Date().toTimeString().slice(0,8);el.insertAdjacentHTML("beforeend",`<div>${t} <b>›</b> ${L[i++%L.length]}</div>`);if(el.children.length>8)el.firstElementChild.remove();setTimeout(tick,1100)};for(let k=0;k<5;k++)tick()}
+
+/* ================= HERO 3D PORTAL (canvas particle sphere + orbit ring) ================= */
+let scene=null;
+function portalScene(cv){
+ if(scene)scene.stop();
+ const ctx=cv.getContext("2d"),dpr=Math.min(devicePixelRatio||1,2),calm=matchMedia("(prefers-reduced-motion:reduce)").matches||document.documentElement.classList.contains("calm");
+ let w=0,h=0,raf=0,mx=0,my=0,tx=0,ty=0,t=0,vis=true,scroll=0;
+ const N=innerWidth<700?600:1300,pts=[],ring=[];
+ for(let i=0;i<N;i++){const y=1-2*(i+.5)/N,r=Math.sqrt(1-y*y),p=i*2.399963;pts.push([Math.cos(p)*r,y,Math.sin(p)*r])}
+ for(let i=0;i<260;i++){const a=i/260*Math.PI*2,rr=1.55+Math.sin(i*7.3)*.05;ring.push([Math.cos(a)*rr,(Math.random()-.5)*.04,Math.sin(a)*rr])}
+ const size=()=>{w=cv.clientWidth;h=cv.clientHeight;cv.width=w*dpr;cv.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)};
+ const mv=e=>{mx=e.clientX/innerWidth-.5;my=e.clientY/innerHeight-.5;const hr=cv.parentElement;hr.style.setProperty("--hx",e.clientX+"px");hr.style.setProperty("--hy",e.clientY+"px")};
+ const ob=new IntersectionObserver(e=>{vis=e[0].isIntersecting;if(vis&&!raf&&!calm)raf=requestAnimationFrame(frame)});ob.observe(cv);
+ function draw(){
+  tx+=(mx-tx)*.05;ty+=(my-ty)*.05;
+  ctx.clearRect(0,0,w,h);
+  const wide=w>1000,cx=wide?w*.72:w*.5,cy=(wide?h*.48:h*.3)-scroll*.15,R=Math.min(w,h)*(wide?.33:.3)*(1+scroll*.0004);
+  const ry=t*.6+tx*.9,rx=-.3+ty*.5,cY=Math.cos(ry),sY=Math.sin(ry),cX=Math.cos(rx),sX=Math.sin(rx);
+  const g=ctx.createRadialGradient(cx,cy,0,cx,cy,R*1.5);g.addColorStop(0,"rgba(0,114,255,.28)");g.addColorStop(.5,"rgba(0,240,255,.05)");g.addColorStop(1,"rgba(0,0,0,0)");ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+  const scanY=Math.sin(t*1.6)*.95;
+  for(const p of pts){let x=p[0]*cY-p[2]*sY,z=p[0]*sY+p[2]*cY,y=p[1]*cX-z*sX;z=p[1]*sX+z*cX;const s=2.8/(2.8+z),hot=Math.abs(p[1]-scanY)<.035,a=(1-z)*.42+.08;
+   ctx.fillStyle=hot?`rgba(220,255,255,${a+.4})`:z<0?`rgba(0,240,255,${a})`:`rgba(0,114,255,${a*.8})`;const sz=(hot?2.2:1.3)*s;ctx.fillRect(cx+x*R*s,cy+y*R*s,sz,sz)}
+  const rr=-t*1.2,cR=Math.cos(rr),sR=Math.sin(rr),tl=.42+ty*.2,cT=Math.cos(tl),sT=Math.sin(tl);
+  for(const p of ring){let x=p[0]*cR-p[2]*sR,z=p[0]*sR+p[2]*cR,y=p[1]*cT-z*sT;z=p[1]*sT+z*cT;x=x*cY-z*sY*.3;const s=2.8/(2.8+z);ctx.fillStyle=`rgba(0,240,255,${.25+(1-z)*.35})`;ctx.beginPath();ctx.arc(cx+x*R*s,cy+y*R*s,1.4*s,0,6.283);ctx.fill()}
+ }
+ function frame(){if(!cv.isConnected){stop();return}if(!vis){raf=0;return}t+=.004;draw();raf=requestAnimationFrame(frame)}
+ function stop(){cancelAnimationFrame(raf);raf=0;ob.disconnect();removeEventListener("pointermove",mv);removeEventListener("resize",size)}
+ const onScroll=()=>{scroll=scrollY};addEventListener("scroll",onScroll,{passive:true});
+ size();addEventListener("resize",size);if(fine)addEventListener("pointermove",mv);
+ if(calm)draw();else raf=requestAnimationFrame(frame);
+ scene={stop:()=>{stop();removeEventListener("scroll",onScroll)}};
+}
+
+/* ================= EVENTS ================= */
+const modal=(h,tid)=>{const m=document.createElement("div");m.className="modal";m.setAttribute("data-lenis-prevent","");m.innerHTML=`<div class="card" role="dialog" aria-modal="true" data-testid="${tid||"modal"}"><span class="corner tl"></span><span class="corner br"></span>${h}</div>`;m.addEventListener("click",e=>{if(e.target===m)closeModal(m)});document.body.append(m);lenis?.stop();return m};
+const closeModal=m=>{m?.remove();lenis?.start()};
+function closeMenu(){$("#mnav").classList.remove("open");$("#burger").innerHTML=ic("menu",20);$("#burger").setAttribute("aria-expanded","false");if(!$(".modal"))lenis?.start()}
+$("#burger").onclick=()=>{const o=$("#mnav").classList.toggle("open");$("#burger").innerHTML=ic(o?"x":"menu",20);$("#burger").setAttribute("aria-expanded",o);o?lenis?.stop():lenis?.start()};
+addEventListener("keydown",e=>{if(e.key=="Escape"){closeModal($(".modal"));closeMenu();$("#drawer").classList.remove("open");$("#aiorb").innerHTML=ic("spark",24)}});
+addEventListener("hashchange",()=>render());
+
+document.addEventListener("click",e=>{
+ const t=e.target.closest("[data-act]");if(!t)return;const a=t.dataset.act,v=t.dataset.v;
+ if(a=="cl")return closeModal(t.closest(".modal"));
+ if(a=="orb"||a=="dclose"){const o=$("#drawer").classList.toggle("open",a=="orb"?undefined:false);$("#aiorb").innerHTML=ic(o?"x":"spark",24);if(o){paintChat();setTimeout(()=>$("#drawer input")?.focus(),300)}return}
+ if(a=="ask")return ask(v);
+ if(a=="push"){const s=myS().find(x=>x.id==v);if(!s)return;t.disabled=true;t.textContent="Writing digest…";api(`/network/servers/${v}/push`,{method:"POST",headers:{"X-Owner-Key":s.key}}).then(()=>toast("AI digest sent to "+s.name),e=>toast(e.message)).finally(()=>render(1));return}
+ if(a=="rmsrv"){const s=myS().find(x=>x.id==v);if(!s||!confirm("Remove "+s.name+" from the network?"))return;api("/network/servers/"+v,{method:"DELETE",headers:{"X-Owner-Key":s.key}}).then(()=>{saveS(myS().filter(x=>x.id!=v));toast("Server removed")},e=>{if(/not found/i.test(e.message))saveS(myS().filter(x=>x.id!=v));toast(e.message)}).finally(()=>render(1));return}
+ if(a=="adeal"){const s=myS().find(x=>x.id==v);if(!s)return;modal(`<span class="kick">${esc(s.name)}</span><h3 style="margin-top:14px">Share a deal</h3><form data-f="deal" data-sid="${esc(v)}"><label class="lb" for="dt">Title</label><input class="inp" id="dt" required maxlength="90" data-testid="deal-title-input"><label class="lb" for="dd">Discount / offer</label><input class="inp" id="dd" maxlength="30" placeholder="20% OFF" data-testid="deal-discount-input"><label class="lb" for="dx">Description</label><input class="inp" id="dx" maxlength="300" data-testid="deal-desc-input"><label class="lb" for="du">Link (optional)</label><input class="inp" id="du" type="url" maxlength="300" data-testid="deal-url-input"><label class="lb" for="dg">Tags (comma separated)</label><input class="inp" id="dg" data-testid="deal-tags-input"><div class="err" id="er"></div><div class="acts"><button class="btn" data-testid="deal-submit-btn">Publish deal</button><button type="button" class="btn ghost" data-act="cl">Cancel</button></div></form>`,"deal-modal");return}
+ if(a=="copykey"){navigator.clipboard?.writeText(v).then(()=>toast("Owner key copied"),()=>toast("Copy blocked by browser"));return}
+ if(a=="dur"){S.dur=v;if(route=="admin")return render(1);$$("#tiers").forEach(el=>{el.innerHTML=tiersInner();$$("#tiers [data-tilt]").forEach(tilt)});return}
+ if(a=="sec"){S.sec=v;if(route!="dashboard")location.hash="dashboard";else{render(1);const m=$(".dmain");if(m&&innerWidth<900)m.scrollIntoView({behavior:"smooth"})}return}
+ if(a=="out"){S.user=null;S.plan=null;S.discord=null;S.sec="overview";location.hash="home";render();toast("Signed out");return}
+ if(a=="buy"){if(!S.user){location.hash="login";toast("Sign in to subscribe");return}
+  modal(`<span class="kick">Checkout</span><h3 style="margin-top:14px">${PLANS[v].n} · ${DUR[durIdx()][1]}</h3><div class="bignum gt" style="font-size:48px">${money(PLANS[v].p[S.dur])}</div><p>Production: the server creates a PayPal subscription, you approve it at PayPal, and a verified webhook grants the entitlement. Card data never touches Portal-X.</p><div class="acts"><button class="btn" data-act="pay" data-v="${v}" data-testid="simulate-approval-btn">Simulate approval (demo)</button><button class="btn ghost" data-act="cl" data-testid="modal-close-btn">Cancel</button></div>`,"checkout-modal");return}
+ if(a=="pay"){S.plan=v;audit("Membership activated: "+PLANS[v].n);closeModal(t.closest(".modal"));render(1);toast("Plan activated (demo)");return}
+ if(a=="dsc-on"){modal(`<span class="kick">OAuth2 · PKCE</span><h3 style="margin-top:14px">Redirect to Discord</h3><p>Production: your browser goes to <span class="mono cy">${esc(API_BASE)}/discord/connect</span> with state + PKCE. This demo links a sample identity.</p><div class="acts"><button class="btn" data-act="dsc-ok" data-testid="discord-authorize-btn">Authorize (demo)</button><button class="btn ghost" data-act="cl" data-testid="modal-close-btn">Cancel</button></div>`,"discord-modal");return}
+ if(a=="dsc-ok"){S.discord={name:S.user.name+"#demo",id:"••••3921"};S.hist.unshift("Connected "+new Date().toLocaleString());audit("Discord connected");closeModal(t.closest(".modal"));render(1);toast("Discord connected");return}
+ if(a=="dsc-off"){S.discord=null;S.hist.unshift("Disconnected "+new Date().toLocaleString());audit("Discord disconnected");render(1);toast("Discord disconnected");return}
+ if(a=="mfa"){S.mfa=!S.mfa;audit("MFA "+(S.mfa?"enabled":"disabled"));render(1);toast("MFA "+(S.mfa?"enabled (demo)":"disabled"));return}
+ if(a=="rev"){S.sessions.splice(+v,1);audit("Session revoked");render(1);toast("Session revoked");return}
+ if(a=="redeem"){if(S.pts>=+v){S.pts-=+v;S.redeemed.unshift(t.dataset.n+" · "+v+" pts");audit("Redeemed "+t.dataset.n);toast("Redeemed "+t.dataset.n)}else toast("Not enough points");render(1);return}
+ if(a=="susp"){const u=S.users[+v];u.st=u.st=="active"?"suspended":"active";audit(`User ${u.u} ${u.st}`);render(1);toast("Action recorded in audit log (demo)");return}
+ if(a=="perk"){const p=S.perks[+v];p.on=p.on?0:1;audit(`Perk ${p.n} ${p.on?"enabled":"disabled"}`);render(1);return}
+ if(a=="accent"){S.accent=v;const m={cyan:["#00F0FF","#0072FF"],matrix:["#00FF88","#00A3FF"],plasma:["#B98CFF","#0072FF"]}[v];document.documentElement.style.setProperty("--cy",m[0]);document.documentElement.style.setProperty("--bl",m[1]);render(1);toast("Accent: "+v);return}
+ if(a=="gen")return genPass();
+ if(a=="copy"){const pw=$("#pw")?.textContent;navigator.clipboard?.writeText(pw).then(()=>toast("Copied to clipboard"),()=>toast("Copy blocked by browser"));return}
+ if(a=="mk"||a=="x")toast(a=="mk"?"Production issues a time-limited signed link":"Request queued (demo)");
+});
+document.addEventListener("input",e=>{
+ const k=e.target.dataset.price;if(k){PLANS[k].p[S.dur]=Math.max(0,+e.target.value||0)}
+ if(e.target.id=="pl")genPass();
+ if(e.target.id=="url")urlCheck(e.target.value);
+ if(e.target.id=="us"){const q=e.target.value.toLowerCase();$$("tr[data-q]").forEach(r=>r.style.display=r.dataset.q.includes(q)?"":"none")}
+ if(e.target.id=="hcmp")cmpHash();
+});
+document.addEventListener("change",async e=>{
+ if(e.target.id=="ps")genPass();
+ if(e.target.id=="calm"){document.documentElement.classList.toggle("calm",e.target.checked);toast("Reduced motion "+(e.target.checked?"on":"off"))}
+ if(e.target.dataset.price)audit(`Price updated: ${PLANS[e.target.dataset.price].n} ${DUR[durIdx()][1]}`);
+ if(e.target.id=="hf"){const f=e.target.files[0];if(!f)return;$("#hout").textContent="Hashing "+f.name+"…";const buf=await f.arrayBuffer(),d=await crypto.subtle.digest("SHA-256",buf);$("#hout").textContent=[...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,"0")).join("");$("#hout").dataset.name=f.name;cmpHash()}
+});
+function cmpHash(){const h=$("#hout")?.textContent||"",c=($("#hcmp")?.value||"").trim().toLowerCase(),r=$("#hres");if(!r)return;if(!c||!/^[a-f0-9]{64}$/.test(h)){r.textContent="";return}r.style.color=c==h?"var(--ok)":"var(--bad)";r.textContent=c==h?"✓ Match — file integrity confirmed":"✕ Mismatch — do not trust this file"}
+document.addEventListener("submit",e=>{
+ e.preventDefault();const f=e.target.dataset.f,g=id=>(e.target.querySelector("#"+id)||{}).value||"",er=e.target.querySelector("#er"),mail=/^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+ if(f=="login"){const em=g("e").trim();if(!mail.test(em)||g("p").length<1){er.textContent="Enter a valid email and password.";return}
+  S.user={name:em.split("@")[0],email:em,admin:/^admin@/i.test(em)};audit("Signed in");S.sec="overview";location.hash="dashboard";render();toast("Signed in")}
+ if(f=="reg"){const u=g("u"),em=g("e").trim(),p=g("p");
+  if(!/^[\w-]{3,24}$/.test(u))return er.textContent="Username: 3-24 letters, numbers, _ or -.";
+  if(!mail.test(em))return er.textContent="Enter a valid email.";
+  if(p.length<12)return er.textContent="Password must be at least 12 characters.";
+  if(p!==g("p2"))return er.textContent="Passwords do not match.";
+  if(!e.target.querySelector("#t1").checked||!e.target.querySelector("#t2").checked)return er.textContent="Accept the Terms and Privacy Policy.";
+  S.user={name:u,email:em};audit("Account created");S.sec="overview";location.hash="dashboard";render();toast("Account created. Production sends a verification email.")}
+ if(f=="tk"){const s=g("s").trim();if(!s)return toast("Add a subject");S.tickets.unshift({id:1043+S.tickets.length,c:g("c"),t:s,s:"Open"});audit("Ticket opened: "+s);S.sec="tickets";if(location.hash!="#dashboard")location.hash="dashboard";else render(1);toast("Ticket submitted")}
+ if(f=="ann"){const t=g("at").trim();if(!t)return;S.ann.unshift({t,k:"Platform"});audit("Announcement published");render(1);toast("Announcement published")}
+ if(f=="chat"){const q=e.target.q.value;e.target.reset();ask(q)}
+ const btn=e.target.querySelector("button:not([type=button])"),busy=(on,txt)=>{if(btn){btn.disabled=on;if(txt)btn.dataset.l=btn.innerHTML,btn.innerHTML=txt;else if(btn.dataset.l)btn.innerHTML=btn.dataset.l}};
+ const tags=s=>s.split(",").map(x=>x.trim()).filter(Boolean).slice(0,8);
+ if(f=="srv"){if(!e.target.querySelector("#rc").checked)return er.textContent="Confirm you manage this server.";er.textContent="";busy(true,"Registering…");
+  api("/network/servers",{method:"POST",body:JSON.stringify({name:g("rn").trim(),category:g("rcat"),tags:tags(g("rt")),members:+g("rm")||0,description:g("rd").trim(),invite:g("ri").trim(),webhook_url:g("rw").trim()})})
+  .then(j=>{const id=j?.server?.id;if(!id)throw new Error("Unexpected response");saveS([...myS(),{id,name:j.server.name,key:j.owner_key,hook:!!j.server.webhook}]);e.target.reset();render(1);
+   modal(`<span class="kick">Server registered</span><h3 style="margin-top:14px">Save your owner key</h3><p>This key proves you manage <b>${esc(j.server.name)}</b>. It's saved in this browser and shown only once.</p><div class="keybox" data-testid="owner-key">${esc(j.owner_key)}</div><div class="acts"><button class="btn" data-act="copykey" data-v="${esc(j.owner_key)}" data-testid="copy-owner-key-btn">${ic("copy",16)}Copy key</button><button class="btn ghost" data-act="cl" data-testid="modal-close-btn">Done</button></div>`,"owner-key-modal")})
+  .catch(x=>{er.textContent=x.message}).finally(()=>busy(false));return}
+ if(f=="deal"){const sid=e.target.dataset.sid,s=myS().find(x=>x.id==sid);if(!s)return;busy(true,"Publishing…");
+  api(`/network/servers/${sid}/deals`,{method:"POST",headers:{"X-Owner-Key":s.key},body:JSON.stringify({title:g("dt").trim(),discount:g("dd").trim(),description:g("dx").trim(),url:g("du").trim(),tags:tags(g("dg"))})})
+  .then(()=>{closeModal(e.target.closest(".modal"));toast("Deal published to the network");loadNet()}).catch(x=>{er.textContent=x.message;busy(false)});return}
+ if(f=="match"){const q=g("mi").trim(),o=$("#matchOut");if(q.length<2)return;busy(true,"Gemini is matching…");o.innerHTML=`<p class="mono cy mt" style="font-size:12px">Scanning deals from every connected server…</p>`;
+  api("/ai/deals/match",{method:"POST",body:JSON.stringify({interests:q})}).then(j=>{const p=Array.isArray(j?.picks)?j.picks:[];o.innerHTML=`<p class="mt" data-testid="match-summary">${esc(j?.summary||"")}</p>`+(p.length?p.map((x,i)=>`<div class="pick" data-testid="match-pick-${i}"><div class="sc">${Math.round(+x.score||0)}</div><div><b>${esc(x.deal?.title||"")}</b> <span class="cy mono" style="font-size:12px">${esc(x.deal?.discount||"")}</span><p style="font-size:13px">${esc(x.deal?.server_name||"")} · ${esc(x.reason||"")}</p></div></div>`).join(""):`<p class="mt">No strong matches yet.</p>`)})
+  .catch(x=>{o.innerHTML=`<p class="bad mt">${esc(x.message)}</p>`}).finally(()=>busy(false));return}
+ if(f=="mod"){const lines=g("mm").split("\n").map(l=>l.trim()).filter(Boolean).slice(0,10),msgs=lines.map(l=>{const i=l.indexOf(":");return i>0&&i<40?{author:l.slice(0,i).trim(),content:l.slice(i+1).trim()||l}:{author:"member",content:l}}),o=$("#modOut");
+  if(!msgs.length)return o.innerHTML='<p class="warn mt">Add at least one message.</p>';const sid=g("ms"),s=myS().find(x=>x.id==sid),log=!!s&&e.target.querySelector("#ml")?.checked;busy(true,"Gemini is reviewing…");
+  api("/ai/moderate",{method:"POST",headers:log?{"X-Owner-Key":s.key}:{},body:JSON.stringify({rules:g("mr"),messages:msgs,server_id:log?sid:null,send_log:log})}).then(j=>{const r=Array.isArray(j?.results)?j.results:[],col={allow:"--ok",warn:"--warn",delete:"--bad",timeout:"--bad"};
+   o.innerHTML=r.map((x,i)=>{const m=msgs[x.index]||msgs[i]||{};return `<div class="modr" data-testid="mod-result-${i}"><div class="rowb"><span class="mono" style="font-size:12px">${esc(m.author||"")}</span><span class="pill" style="color:var(${col[x.action]||"--mut"})">${esc(x.action||"?")} · ${Math.round(+x.severity||0)}</span></div><q>${esc(m.content||"")}</q><p style="font-size:13px">${esc(x.reason||"")}${Array.isArray(x.categories)&&x.categories.length?` <span class="cy mono" style="font-size:11px">[${x.categories.map(esc).join(", ")}]</span>`:""}</p></div>`}).join("")+`<p class="fine">${j?.logged?"Report sent to your server's webhook. ":""}Preview only: actions are enforced once the Portal-X Discord app is installed in the server.</p>`})
+  .catch(x=>{o.innerHTML=`<p class="bad mt">${esc(x.message)}</p>`}).finally(()=>busy(false));return}
+});
+
+/* ================= BOOT ================= */
+$("#aiorb").innerHTML=ic("spark",24);$("#drawer").innerHTML=aiHead(1)+chatUI("drawer");
+$("#logo1").innerHTML=LOGO(30);$("#logo2").innerHTML=LOGO(34);$("#yr").textContent=new Date().getFullYear();
+(()=>{const n=$("#bootn"),t0=performance.now();const f=t=>{const p=Math.min(1,(t-t0)/1800);n.textContent=String(Math.round(p*100)).padStart(3,"0");if(p<1)requestAnimationFrame(f)};requestAnimationFrame(f)})();
+if(window.Lenis&&!matchMedia("(prefers-reduced-motion:reduce)").matches){lenis=new Lenis({lerp:.085,smoothWheel:true});const raf=t=>{lenis.raf(t);requestAnimationFrame(raf)};requestAnimationFrame(raf)}
+addEventListener("scroll",()=>{const m=document.documentElement.scrollHeight-innerHeight;$("#progress").style.width=(m>0?scrollY/m*100:0)+"%";$("#nav").classList.toggle("scrolled",scrollY>30);const ht=$("#heroText");if(ht&&scrollY<innerHeight*1.2){ht.style.transform=`translate3d(0,${scrollY*.18}px,0)`;ht.style.opacity=Math.max(0,1-scrollY/(innerHeight*.9))}},{passive:true});
+setInterval(()=>{const x=$("#exp");if(x)x.textContent=x.textContent>1?x.textContent-1:300},1000);
+render();
+</script>
+</body>
+</html>
